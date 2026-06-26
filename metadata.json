@@ -1,0 +1,6 @@
+{
+  "name": "EasyFinance",
+  "description": "EasyFinance é um gerenciador financeiro inovador e tecnológico que oferece gráficos mensais interativos, suporte a múltiplas moedas, sincronização em nuvem e offline, notificações inteligentes de boletos, biometria simulada, integração de contas bancárias e inteligência artificial para insights financeiros.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
