@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> EasyFinance Inteligência Financeira</title>
+  <title>EasyFinance • Inteligência Financeira e Open Finance</title>
+  
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;950&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -20,65 +24,103 @@
       }
     }
   </script>
+
   <style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #050505; }
-    ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #252525; }
-    body { background-color: #050505; color: #d4d4d8; }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #050505;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1c1c1e;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2c2c2e;
+    }
+
+    /* Print Stylesheet for PDF/Print Exports */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-card {
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+      }
+    }
+
+    /* Custom Animation classes */
+    .animate-pulse-slow {
+      animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
   </style>
 </head>
-<body class="font-sans antialiased text-[#e0e0e0] bg-[#050505]">
+<body class="bg-[#050505] text-[#e4e4e7] font-sans antialiased selection:bg-cyan-500 selection:text-black">
+
   <div id="root"></div>
 
-  <!-- CDNs: React, ReactDOM, Babel & Lucide -->
+  <!-- React 18, ReactDOM 18, and Babel CDN -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+    const { useState, useEffect, useRef, useMemo } = React;
 
-    // Compact dynamic Lucide wrapper
+    // React Wrapper for Lucide Icons
     function Icon({ name, className = "w-4 h-4 text-slate-400" }) {
-      const ref = useRef(null);
+      const iconRef = useRef(null);
+
       useEffect(() => {
-        if (ref.current && window.lucide) {
+        if (iconRef.current && window.lucide) {
           try {
             window.lucide.createIcons();
-          } catch(e){}
+          } catch (err) {
+            console.warn("Lucide rendering error:", err);
+          }
         }
       }, [name]);
-      return <i ref={ref} data-lucide={name} className={className}></i>;
+
+      return <i ref={iconRef} data-lucide={name} className={className}></i>;
     }
 
-    // Main App Container
+    // Main App Component
     function App() {
-      // 1. App States
+      // -----------------------------------------------------------------
+      // Persistent States (loads from LocalStorage, falls back to mock)
+      // -----------------------------------------------------------------
       const [isUnlocked, setIsUnlocked] = useState(false);
       const [pin, setPin] = useState("");
       const [pinError, setPinError] = useState("");
-      const [selectedCurrency, setSelectedCurrency] = useState("BRL");
-      const [deviceLayout, setDeviceLayout] = useState("desktop");
-      
-      const currencySymbols = { BRL: "R$", USD: "$", EUR: "€", GBP: "£" };
-      const exchangeRates = {
-        BRL: { symbol: "R$", rateToBRL: 1 },
-        USD: { symbol: "$", rateToBRL: 5.42 },
-        EUR: { symbol: "€", rateToBRL: 5.85 },
-        GBP: { symbol: "£", rateToBRL: 6.90 }
-      };
 
-      // 2. Mock Databases (persisted in LocalStorage)
       const [transactions, setTransactions] = useState(() => {
         const saved = localStorage.getItem("easyfinance_transactions") || localStorage.getItem("balanzy_transactions");
         return saved ? JSON.parse(saved) : [
-          { id: "1", type: "income", category: "Serviços", amount: 4800, currency: "BRL", description: "Desenvolvimento Frontend", date: "2026-06-03" },
-          { id: "2", type: "expense", category: "Alimentação", amount: 65.5, currency: "BRL", description: "Supermercado Pão de Açúcar", date: "2026-06-10" },
-          { id: "3", type: "expense", category: "Transporte", amount: 45, currency: "USD", description: "Viagem Uber EUA", date: "2026-06-12" },
-          { id: "4", type: "income", category: "Serviços", amount: 350, currency: "EUR", description: "Consultoria Internacional Alemanha", date: "2026-06-14" },
-          { id: "5", type: "expense", category: "Lazer", amount: 120, currency: "BRL", description: "Cinema e restaurante", date: "2026-06-15" }
+          { id: "t1", type: "income", category: "Serviços", amount: 4800, currency: "BRL", description: "Desenvolvimento Frontend", date: "2026-06-03" },
+          { id: "t2", type: "expense", category: "Alimentação", amount: 65.5, currency: "BRL", description: "Supermercado Pão de Açúcar", date: "2026-06-10" },
+          { id: "t3", type: "expense", category: "Transporte", amount: 45, currency: "USD", description: "Viagem Uber EUA", date: "2026-06-12" },
+          { id: "t4", type: "income", category: "Serviços", amount: 350, currency: "EUR", description: "Consultoria Internacional Alemanha", date: "2026-06-14" },
+          { id: "t5", type: "expense", category: "Lazer", amount: 120, currency: "BRL", description: "Cinema e restaurante", date: "2026-06-15" }
         ];
       });
 
@@ -107,328 +149,503 @@
         ];
       });
 
-      // AI Advisor state
+      // -----------------------------------------------------------------
+      // UI / State Managers
+      // -----------------------------------------------------------------
+      const [selectedCurrency, setSelectedCurrency] = useState("BRL");
+      const [deviceLayout, setDeviceLayout] = useState("desktop"); // desktop or mobile viewport
+      const [notification, setNotification] = useState("");
+      const [isOffline, setIsOffline] = useState(false);
+
+      // AI Chat State
       const [aiMessages, setAiMessages] = useState([
-        { id: "1", sender: "ai", text: "Olá! Sou seu assessor financeiro EasyFinance inteligente. Escreva suas dúvidas ou clique em uma sugestão abaixo para analisar seus hábitos locais!" }
+        { id: "m1", sender: "ai", text: "Olá! Sou seu assistente de Inteligência Financeira EasyFinance GPT. Como posso te ajudar hoje? Posso analisar seus gastos, verificar boletos pendentes ou dar dicas de economia." }
       ]);
       const [aiInput, setAiInput] = useState("");
       const [aiLoading, setAiLoading] = useState(false);
-      const chatContainerRef = useRef(null);
+      const chatEndRef = useRef(null);
 
-      // Manual form input states
-      const [newDesc, setNewDesc] = useState("");
-      const [newType, setNewType] = useState("expense");
-      const [newCategory, setNewCategory] = useState("Alimentação");
-      const [newVal, setNewVal] = useState("");
-      const [newCurr, setNewCurr] = useState("BRL");
-      const [newBank, setNewBank] = useState("Local");
+      // New transaction inputs
+      const [txDesc, setTxDesc] = useState("");
+      const [txType, setTxType] = useState("expense");
+      const [txCategory, setTxCategory] = useState("Alimentação");
+      const [txAmount, setTxAmount] = useState("");
+      const [txCurrency, setTxCurrency] = useState("BRL");
+      const [txAccount, setTxAccount] = useState("Local");
 
-      // Connection modal states
+      // Open Finance Connect Modal
       const [showConnectModal, setShowConnectModal] = useState(false);
-      const [selectedBankName, setSelectedBankName] = useState("");
-      const [authStep, setAuthStep] = useState("choose");
+      const [selectedBank, setSelectedBank] = useState(null);
+      const [bankAgency, setBankAgency] = useState("");
+      const [bankAccountNum, setBankAccountNum] = useState("");
+      const [bankPassword, setBankPassword] = useState("");
+      const [isConnecting, setIsConnecting] = useState(false);
 
-      // Exporter modal
-      const [selectedMonth, setSelectedMonth] = useState("todos");
-      const [notificationMsg, setNotificationMsg] = useState("");
+      // New manual Boleto form
+      const [showAddBoleto, setShowAddBoleto] = useState(false);
+      const [boletoTitle, setBoletoTitle] = useState("");
+      const [boletoValue, setBoletoValue] = useState("");
+      const [boletoDate, setBoletoDate] = useState("");
+      const [boletoCategory, setBoletoCategory] = useState("Moradia");
 
-      // Saving to localStorage automatically
-      useEffect(() => { localStorage.setItem("easyfinance_transactions", JSON.stringify(transactions)); }, [transactions]);
-      useEffect(() => { localStorage.setItem("easyfinance_boletos", JSON.stringify(boletos)); }, [boletos]);
-      useEffect(() => { localStorage.setItem("easyfinance_banks", JSON.stringify(banks)); }, [banks]);
-      useEffect(() => { localStorage.setItem("easyfinance_backups", JSON.stringify(backupLogs)); }, [backupLogs]);
+      // Filter state for transaction logs list
+      const [filterCategory, setFilterCategory] = useState("todas");
+      const [filterType, setFilterType] = useState("todos");
 
-      // Scroll control for AI
+      // Currencies Exchange Rates Configuration (Base is BRL)
+      const exchangeRates = {
+        BRL: { symbol: "R$", rateToBRL: 1, name: "Real Brasileiro" },
+        USD: { symbol: "$", rateToBRL: 5.42, name: "Dólar Comercial" },
+        EUR: { symbol: "€", rateToBRL: 5.85, name: "Euro" },
+        GBP: { symbol: "£", rateToBRL: 6.90, name: "Libra Esterlina" }
+      };
+
+      // -----------------------------------------------------------------
+      // Effects for Persistency
+      // -----------------------------------------------------------------
       useEffect(() => {
-        if (aiMessages.length > 1 && chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        localStorage.setItem("easyfinance_transactions", JSON.stringify(transactions));
+      }, [transactions]);
+
+      useEffect(() => {
+        localStorage.setItem("easyfinance_boletos", JSON.stringify(boletos));
+      }, [boletos]);
+
+      useEffect(() => {
+        localStorage.setItem("easyfinance_banks", JSON.stringify(banks));
+      }, [banks]);
+
+      useEffect(() => {
+        localStorage.setItem("easyfinance_backups", JSON.stringify(backupLogs));
+      }, [backupLogs]);
+
+      useEffect(() => {
+        if (chatEndRef.current) {
+          chatEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
       }, [aiMessages, aiLoading]);
 
-      // Currency helper calculation
+      // -----------------------------------------------------------------
+      // Financial Calculation Helper Functions
+      // -----------------------------------------------------------------
       const convertVal = (amount, from, to) => {
         if (from === to) return amount;
         const inBRL = amount * (exchangeRates[from]?.rateToBRL || 1);
         return inBRL / (exchangeRates[to]?.rateToBRL || 1);
       };
 
-      const totalIncome = transactions
-        .filter(t => t.type === "income")
-        .reduce((sum, t) => sum + convertVal(t.amount, t.currency, selectedCurrency), 0);
+      // Calculate totals in currently selected display currency
+      const totalIncome = useMemo(() => {
+        return transactions
+          .filter(t => t.type === "income")
+          .reduce((sum, t) => sum + convertVal(t.amount, t.currency, selectedCurrency), 0);
+      }, [transactions, selectedCurrency]);
 
-      const totalExpense = transactions
-        .filter(t => t.type === "expense")
-        .reduce((sum, t) => sum + convertVal(t.amount, t.currency, selectedCurrency), 0);
+      const totalExpense = useMemo(() => {
+        return transactions
+          .filter(t => t.type === "expense")
+          .reduce((sum, t) => sum + convertVal(t.amount, t.currency, selectedCurrency), 0);
+      }, [transactions, selectedCurrency]);
 
       const netBalance = totalIncome - totalExpense;
 
-      // Handle Lock PIN submitting
+      // Expense Category breakdown for Chart
+      const categoryTotals = useMemo(() => {
+        const breakdown = {};
+        transactions
+          .filter(t => t.type === "expense")
+          .forEach(t => {
+            const valInDisplayCurrency = convertVal(t.amount, t.currency, selectedCurrency);
+            breakdown[t.category] = (breakdown[t.category] || 0) + valInDisplayCurrency;
+          });
+        return breakdown;
+      }, [transactions, selectedCurrency]);
+
+      // -----------------------------------------------------------------
+      // PIN Security Actions
+      // -----------------------------------------------------------------
       const handleKeyPress = (num) => {
         setPinError("");
         if (pin.length < 4) {
           const nextPin = pin + num;
           setPin(nextPin);
+          
           if (nextPin === "1505") {
             setTimeout(() => {
               setIsUnlocked(true);
               setPin("");
+              showToast("Acesso autorizado com sucesso!");
             }, 150);
           } else if (nextPin.length === 4) {
             setTimeout(() => {
-              setPinError("PIN inválido! Digite 1505 para acessar.");
+              setPinError("PIN incorreto! Dica: utilize o código 1505.");
               setPin("");
             }, 250);
           }
         }
       };
 
-      // Add a Manual Lançamento
+      const handleClearPin = () => {
+        setPin("");
+        setPinError("");
+      };
+
+      // -----------------------------------------------------------------
+      // App Custom Operations
+      // -----------------------------------------------------------------
+      const showToast = (msg) => {
+        setNotification(msg);
+        setTimeout(() => setNotification(""), 4000);
+      };
+
+      // Add custom Manual Transaction
       const handleAddTransaction = (e) => {
         e.preventDefault();
-        if (!newDesc.trim() || !newVal) return;
-        const valNumeric = parseFloat(newVal);
-        const t = {
-          id: Math.random().toString(),
-          type: newType,
-          category: newCategory,
-          amount: valNumeric,
-          currency: newCurr,
-          description: newDesc,
-          date: new Date().toISOString().split("T")[0],
-          bankAccount: newBank !== "Local" ? newBank : undefined
-        };
-        setTransactions(prev => [t, ...prev]);
+        if (!txDesc.trim() || !txAmount) return;
 
-        if (newBank !== "Local") {
+        const amountNum = parseFloat(txAmount);
+        if (isNaN(amountNum) || amountNum <= 0) return;
+
+        const newTx = {
+          id: "t_" + Math.random().toString(36).substring(2, 9),
+          type: txType,
+          category: txCategory,
+          amount: amountNum,
+          currency: txCurrency,
+          description: txDesc,
+          date: new Date().toISOString().split("T")[0],
+          bankAccount: txAccount !== "Local" ? txAccount : undefined
+        };
+
+        setTransactions(prev => [newTx, ...prev]);
+
+        // If a connected account was chosen, modify its balance
+        if (txAccount !== "Local") {
           setBanks(prev => prev.map(acc => {
-            if (acc.bankName === newBank) {
-              const diffBank = convertVal(valNumeric, newCurr, acc.currency);
-              const sign = newType === "income" ? 1 : -1;
-              return { ...acc, balance: acc.balance + (diffBank * sign) };
+            if (acc.bankName === txAccount) {
+              const inAccCurrency = convertVal(amountNum, txCurrency, acc.currency);
+              const sign = txType === "income" ? 1 : -1;
+              return { ...acc, balance: acc.balance + (inAccCurrency * sign) };
             }
             return acc;
           }));
         }
-        setNewDesc("");
-        setNewVal("");
+
+        setTxDesc("");
+        setTxAmount("");
+        showToast(`Lançamento "${txDesc}" adicionado com sucesso!`);
       };
 
-      // Pay Boleto billing
-      const handlePayBoleto = (b) => {
-        setBoletos(prev => prev.map(item => item.id === b.id ? { ...item, paid: true } : item));
-        const t = {
-          id: Math.random().toString(),
+      // Delete an existing transaction
+      const handleDeleteTransaction = (id) => {
+        const tx = transactions.find(t => t.id === id);
+        if (!tx) return;
+        setTransactions(prev => prev.filter(t => t.id !== id));
+        showToast("Lançamento removido com sucesso.");
+      };
+
+      // Pay a pending Boleto
+      const handlePayBoleto = (boleto) => {
+        setBoletos(prev => prev.map(b => b.id === boleto.id ? { ...b, paid: true } : b));
+        
+        // Register transaction in history
+        const newTx = {
+          id: "t_" + Math.random().toString(36).substring(2, 9),
           type: "expense",
-          category: b.category,
-          amount: b.amount,
-          currency: b.currency,
-          description: `Pgto Boleto: ${b.title}`,
+          category: boleto.category,
+          amount: boleto.amount,
+          currency: boleto.currency,
+          description: `Pagamento de boleto: ${boleto.title}`,
           date: new Date().toISOString().split("T")[0]
         };
-        setTransactions(prev => [t, ...prev]);
-        triggerAlertNotification(`Boleto "${b.title}" pago com sucesso via integração!`);
+
+        setTransactions(prev => [newTx, ...prev]);
+        showToast(`Boleto "${boleto.title}" pago e debitado do saldo!`);
       };
 
-      // Delete Boleto
+      // Delete a boleto
       const handleDeleteBoleto = (id) => {
         setBoletos(prev => prev.filter(b => b.id !== id));
+        showToast("Boleto removido.");
       };
 
-      // Create raw Boleto
-      const [newBoletoTitle, setNewBoletoTitle] = useState("");
-      const [newBoletoVal, setNewBoletoVal] = useState("");
-      const [newBoletoDate, setNewBoletoDate] = useState("");
-      const [newBoletoCategory, setNewBoletoCategory] = useState("Moradia");
-      const [showAddBoleto, setShowAddBoleto] = useState(false);
-
-      const handleAddBoleto = (e) => {
+      // Create custom Boleto
+      const handleCreateBoleto = (e) => {
         e.preventDefault();
-        if (!newBoletoTitle || !newBoletoVal || !newBoletoDate) return;
-        const digitStr = Array.from({ length: 47 }, () => Math.floor(Math.random() * 10)).join("");
-        const b = {
-          id: Math.random().toString(),
-          title: newBoletoTitle,
-          amount: parseFloat(newBoletoVal),
+        if (!boletoTitle.trim() || !boletoValue || !boletoDate) return;
+
+        const valNum = parseFloat(boletoValue);
+        if (isNaN(valNum) || valNum <= 0) return;
+
+        // Generate a random 47-digit barcode string
+        const barcodeNum = Array.from({ length: 47 }, () => Math.floor(Math.random() * 10)).join("");
+        const formattedBarcode = `${barcodeNum.substring(0, 5)}.${barcodeNum.substring(5, 10)} ${barcodeNum.substring(10, 15)} ${barcodeNum.substring(15, 20)} ${barcodeNum.substring(20, 25)} ${barcodeNum.substring(25, 47)}`;
+
+        const newBoleto = {
+          id: "b_" + Math.random().toString(36).substring(2, 9),
+          title: boletoTitle,
+          amount: valNum,
           currency: "BRL",
-          dueDate: newBoletoDate,
+          dueDate: boletoDate,
           paid: false,
-          category: newBoletoCategory,
-          barcode: `${digitStr.substring(0, 5)}.${digitStr.substring(5, 10)} ${digitStr.substring(10, 15)} ${digitStr.substring(15, 20)} ${digitStr.substring(20, 25)} ${digitStr.substring(25, 47)}`
+          category: boletoCategory,
+          barcode: formattedBarcode
         };
-        setBoletos(prev => [b, ...prev]);
-        setNewBoletoTitle("");
-        setNewBoletoVal("");
-        setNewBoletoDate("");
+
+        setBoletos(prev => [newBoleto, ...prev]);
+        setBoletoTitle("");
+        setBoletoValue("");
+        setBoletoDate("");
         setShowAddBoleto(false);
-        triggerAlertNotification(`Boleto "${b.title}" lançado no sistema!`);
+        showToast(`Novo boleto de cobrança "${boletoTitle}" gerado com sucesso!`);
       };
 
-      // Connect Bank
-      const handleConfirmConnect = (e) => {
+      // Open Finance Connect Bank flow
+      const handleOpenBankConnect = (bank) => {
+        setSelectedBank(bank);
+        setBankAgency("");
+        setBankAccountNum("");
+        setBankPassword("");
+        setShowConnectModal(true);
+      };
+
+      const handleConfirmBankConnection = (e) => {
         e.preventDefault();
-        setAuthStep("success");
+        if (!bankAgency || !bankAccountNum || !bankPassword) return;
+
+        setIsConnecting(true);
+
         setTimeout(() => {
           setBanks(prev => prev.map(acc => {
-            if (acc.bankName === selectedBankName) {
+            if (acc.bankName === selectedBank.bankName) {
               return { ...acc, isConnected: true, lastSynced: new Date().toISOString() };
             }
             return acc;
           }));
-          const pulledSeed = selectedBankName === "Nubank" ? 180 : 1200;
-          const t = {
-            id: Math.random().toString(),
+
+          // Import seed deposit from connected account to transaction history
+          const seedDeposit = selectedBank.bankName === "Nubank" ? 1500 : selectedBank.bankName === "Itaú" ? 5000 : 800;
+          const newTx = {
+            id: "t_" + Math.random().toString(36).substring(2, 9),
             type: "income",
             category: "Serviços",
-            amount: pulledSeed,
+            amount: seedDeposit,
             currency: "BRL",
-            description: `Importação Open Finance ${selectedBankName}`,
+            description: `Importação Inicial Open Finance ${selectedBank.bankName}`,
             date: new Date().toISOString().split("T")[0],
-            bankAccount: selectedBankName
+            bankAccount: selectedBank.bankName
           };
-          setTransactions(prev => [t, ...prev]);
+
+          setTransactions(prev => [newTx, ...prev]);
+          setIsConnecting(false);
           setShowConnectModal(false);
-        }, 1000);
-      };
-
-      const handleTriggerBackup = () => {
-        const size = Math.floor(10 + Math.random() * 40);
-        const log = {
-          id: Math.random().toString(),
-          provider: "EasyFinance Secure Cloud",
-          date: new Date().toISOString(),
-          sizeStr: `${size} KB`,
-          status: "success"
-        };
-        setBackupLogs(prev => [...prev, log]);
-        triggerAlertNotification("Backup criptografado enviado para Nuvem!");
-      };
-
-      // AI Chat Responses simulator
-      const handleSendAiMessage = async (text) => {
-        if (!text.trim()) return;
-        const userMsg = { id: Math.random().toString(), sender: "user", text };
-        setAiMessages(prev => [...prev, userMsg]);
-        setAiInput("");
-        setAiLoading(true);
-
-        setTimeout(() => {
-          let responseText = "Analisando seu extrato local... Percebo comportamento equilibrado com foco em despesas essenciais. Se tiver dúvidas, digite novamente.";
-          const norm = text.toLowerCase();
-          if (norm.includes("limite") || norm.includes("gasto")) {
-            responseText = `Atualmente seu gasto total é de ${currencySymbols[selectedCurrency]} ${totalExpense.toFixed(2)}. Seu limite de orçamento planejado é R$ 3000,00. Tente otimizar categorias como Alimentação e Lazer!`;
-          } else if (norm.includes("saldo") || norm.includes("economizar")) {
-            responseText = `Seu resultado atual consolidado é de ${currencySymbols[selectedCurrency]} ${netBalance.toFixed(2)}. Recomendo guardar pelo menos 15% das suas receitas em contas remuneradas como as de APIs conectadas!`;
-          } else if (norm.includes("boleto") || norm.includes("pagar")) {
-            const pending = boletos.filter(b => !b.paid).length;
-            responseText = `Você possui ${pending} boletos pendentes de pagamento. O maior deles é de R$ ${Math.max(...boletos.map(b => b.amount)).toFixed(2)}. Mantenha sua carteira em dia para evitar juros!`;
-          }
-          setAiMessages(prev => [...prev, { id: Math.random().toString(), sender: "ai", text: responseText }]);
-          setAiLoading(false);
+          showToast(`Integração Open Finance ativa com ${selectedBank.bankName}!`);
         }, 1500);
       };
 
-      const triggerAlertNotification = (msg) => {
-        setNotificationMsg(msg);
-        setTimeout(() => { setNotificationMsg(""); }, 4500);
+      // Disconnect open finance bank API
+      const handleDisconnectBank = (bankId, bankName) => {
+        setBanks(prev => prev.map(acc => acc.id === bankId ? { ...acc, isConnected: false } : acc));
+        showToast(`Conexão com ${bankName} encerrada.`);
       };
 
-      // Render category allocations
-      const expenseCategoriesAgg = transactions
-        .filter(t => t.type === "expense")
-        .reduce((acc, t) => {
-          const converted = convertVal(t.amount, t.currency, selectedCurrency);
-          acc[t.category] = (acc[t.category] || 0) + converted;
-          return acc;
-        }, {});
+      // Backup Cloud Integration Logger
+      const handleTriggerCloudBackup = () => {
+        const sizeNum = Math.floor(10 + Math.random() * 40);
+        const newLog = {
+          id: "bkp_" + Math.random().toString(36).substring(2, 9),
+          provider: "EasyFinance Secure Cloud",
+          date: new Date().toISOString(),
+          sizeStr: `${sizeNum} KB`,
+          status: "success"
+        };
+        setBackupLogs(prev => [...prev, newLog]);
+        showToast("Backup redundante criptografado com sucesso!");
+      };
 
-      // Export CSV data
+      // Export transaction statement as beautiful CSV File
       const handleExportCSV = () => {
-        let csvContent = "\uFEFF";
-        csvContent += "ID;Tipo;Descricao;Categoria;Valor;Moeda;Data;Conta\n";
+        let csvContent = "\uFEFF"; // UTF-8 Byte Order Mark
+        csvContent += "ID;Tipo;Descricao;Categoria;Valor;Moeda;Data;Conta Bancaria\n";
+
         transactions.forEach(t => {
-          csvContent += `${t.id};${t.type === "income" ? "Receita" : "Despesa"};"${t.description}";${t.category};${t.amount};${t.currency};${t.date};${t.bankAccount || "Local"}\n`;
+          const row = [
+            t.id,
+            t.type === "income" ? "Receita" : "Despesa",
+            `"${t.description.replace(/"/g, '""')}"`,
+            t.category,
+            t.amount,
+            t.currency,
+            t.date,
+            t.bankAccount || "Local"
+          ].join(";");
+          csvContent += row + "\n";
         });
+
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.href = url;
-        link.download = `easyfinance-backup-${new Date().toISOString().split("T")[0]}.csv`;
+        link.setAttribute("href", url);
+        link.setAttribute("download", `easyfinance-extrato-${new Date().toISOString().split("T")[0]}.csv`);
+        document.body.appendChild(link);
         link.click();
-        triggerAlertNotification("Backup CSV baixado com sucesso!");
+        document.body.removeChild(link);
+        showToast("Extrato CSV baixado com sucesso!");
       };
 
-      // Print page trigger
-      const handleTriggerPrint = () => {
+      // Trigger standard print optimized layout
+      const handlePrintReport = () => {
         window.print();
       };
 
-      // ----------------------------------------------------
-      // LOCK SCREEN RENDER (PIN 1505)
+      // AI Advisor Smart Assistant Chat Response
+      const handleSendAiMessage = async () => {
+        if (!aiInput.trim()) return;
+
+        const userText = aiInput;
+        const newUserMsg = { id: "msg_" + Math.random().toString(36).substring(2, 9), sender: "user", text: userText };
+        setAiMessages(prev => [...prev, newUserMsg]);
+        setAiInput("");
+        setAiLoading(true);
+
+        try {
+          // Attempt call to backend server endpoint first (AI Studio Cloud Run API integration)
+          const response = await fetch("/api/ai/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: userText,
+              transactions,
+              boletos,
+              currency: selectedCurrency
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setAiMessages(prev => [...prev, { id: "msg_" + Math.random().toString(36).substring(2, 9), sender: "ai", text: data.text }]);
+          } else {
+            throw new Error("Local fallback required.");
+          }
+        } catch (err) {
+          // Autonomous client-side intelligent local AI fallback (in case they double-click and run locally)
+          setTimeout(() => {
+            let aiReply = "Peço desculpas, não consegui acessar o servidor central no momento. No entanto, analisando seus dados de carteira local:";
+            const query = userText.toLowerCase();
+
+            if (query.includes("gasto") || query.includes("limite") || query.includes("categoria") || query.includes("alimentação")) {
+              const maxCat = Object.keys(categoryTotals).reduce((a, b) => categoryTotals[a] > categoryTotals[b] ? a : b, "Nenhuma");
+              aiReply = `Sua despesa acumulada é de ${exchangeRates[selectedCurrency].symbol} ${totalExpense.toFixed(2)}. Sua maior categoria de consumo é **${maxCat}**, com o total de ${exchangeRates[selectedCurrency].symbol} ${(categoryTotals[maxCat] || 0).toFixed(2)}. Tente planejar suas saídas para não estourar a meta mensal recomendada de ${exchangeRates[selectedCurrency].symbol} 3.000,00!`;
+            } else if (query.includes("saldo") || query.includes("guardar") || query.includes("investir") || query.includes("economizar")) {
+              aiReply = `Seu saldo líquido atual é de **${exchangeRates[selectedCurrency].symbol} ${netBalance.toFixed(2)}**. Com base no seu índice de poupança, você está economizando ${netBalance > 0 ? ((netBalance / totalIncome) * 100).toFixed(0) : 0}% de suas receitas. Dica: tente transferir pelo menos 15% do seu saldo para investimentos de liquidez diária via Open Finance!`;
+            } else if (query.includes("boleto") || query.includes("vencer") || query.includes("pagar")) {
+              const pendingBoletos = boletos.filter(b => !b.paid);
+              if (pendingBoletos.length > 0) {
+                aiReply = `Você possui **${pendingBoletos.length} boletos em aberto** aguardando pagamento. O boleto mais próximo é o "${pendingBoletos[0].title}" de R$ ${pendingBoletos[0].amount.toFixed(2)} que vence em ${pendingBoletos[0].dueDate}. Recomendo pagá-lo clicando no botão "Pagar" para evitar multas de mora.`;
+              } else {
+                aiReply = `Excelente notícia! Todos os seus boletos de faturamento cadastrados via CPF no DDA estão quitados. Ótimo controle fiscal!`;
+              }
+            } else {
+              aiReply = `Olá! Analisei sua carteira do EasyFinance. Atualmente você possui um saldo consolidado de **${exchangeRates[selectedCurrency].symbol} ${netBalance.toFixed(2)}** (${transactions.length} transações). Suas receitas somam ${exchangeRates[selectedCurrency].symbol} ${totalIncome.toFixed(2)} e despesas ${exchangeRates[selectedCurrency].symbol} ${totalExpense.toFixed(2)}. Como posso ajudá-lo a otimizar este planejamento?`;
+            }
+
+            setAiMessages(prev => [...prev, { id: "msg_" + Math.random().toString(36).substring(2, 9), sender: "ai", text: aiReply }]);
+          }, 1200);
+        } finally {
+          setAiLoading(false);
+        }
+      };
+
+      // Preset Quick Chat Queries
+      const handleQuickChatPrompt = (promptText) => {
+        setAiInput(promptText);
+      };
+
+      // Filtered Transactions for the main logger list view
+      const filteredTransactions = useMemo(() => {
+        return transactions.filter(t => {
+          if (filterCategory !== "todas" && t.category.toLowerCase() !== filterCategory.toLowerCase()) return false;
+          if (filterType !== "todos" && t.type !== filterType) return false;
+          return true;
+        });
+      }, [transactions, filterCategory, filterType]);
+
+      // -----------------------------------------------------------------
+      // RENDER SECTION 1: SECURE PIN LOCK SCREEN (PIN 1505)
+      // -----------------------------------------------------------------
       if (!isUnlocked) {
         return (
-          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505] text-[#e0e0e0] font-sans p-6 overflow-hidden">
-            <div className="absolute inset-0 z-0 overflow-hidden opacity-5">
-              <div className="absolute top-10 left-10 w-96 h-96 bg-cyan-500 rounded-full filter blur-[100px]" />
-              <div className="absolute bottom-10 right-10 w-96 h-96 bg-blue-600 rounded-full filter blur-[100px]" />
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050505] text-[#e4e4e7] p-6 overflow-hidden">
+            {/* Elegant Background ambient glows */}
+            <div className="absolute inset-0 z-0 opacity-10">
+              <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-cyan-500 rounded-full filter blur-[150px] animate-pulse-slow" />
+              <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-blue-600 rounded-full filter blur-[150px] animate-pulse-slow" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#111_1px,transparent_1px),linear-gradient(to_bottom,#111_1px,transparent_1px)] bg-[size:4rem_4rem]" />
             </div>
 
             <div className="relative z-10 w-full max-w-sm bg-[#0d0d0e] rounded-2xl border border-[#1a1a1a] shadow-2xl p-8 flex flex-col items-center">
-              <div className="flex items-center gap-2 mb-8">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
-                  <span className="text-black font-black text-xl italic tracking-wider">E</span>
+              {/* Brand Title Banner */}
+              <div className="flex items-center gap-2.5 mb-8">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
+                  <span className="text-black font-black text-2xl italic tracking-wider">E</span>
                 </div>
-                <span className="text-xl font-bold tracking-tight text-white">
-                  EasyFinance <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-blue-500/10 text-cyan-400 border border-blue-500/20 ml-1">Secure</span>
-                </span>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight text-white leading-none">EasyFinance</h1>
+                  <span className="text-[9px] text-cyan-400 font-mono font-bold tracking-widest uppercase mt-1 block">SECURE SYSTEM</span>
+                </div>
               </div>
 
+              {/* Pad title */}
               <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-[#050505] flex items-center justify-center mx-auto mb-3 border border-[#1a1a1a]">
+                <div className="w-16 h-16 rounded-full bg-[#050505] border border-[#1a1a1a] flex items-center justify-center mx-auto mb-3">
                   <Icon name="key-round" className="w-8 h-8 text-emerald-400" />
                 </div>
-                <h2 className="text-lg font-semibold tracking-tight text-white">Segurança Requerida</h2>
+                <h2 className="text-lg font-bold tracking-tight text-white">Autenticação Requerida</h2>
                 <p className="text-xs text-slate-400 mt-1">Insira o PIN de 4 dígitos para continuar</p>
               </div>
 
+              {/* Display pin error if exists */}
               {pinError && (
-                <div className="w-full mb-4 p-3 rounded-lg bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 flex items-center gap-2 justify-center">
+                <div className="w-full mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 flex items-center gap-2 justify-center text-center animate-bounce">
                   <Icon name="alert-circle" className="w-4 h-4 text-rose-500 shrink-0" />
                   <span>{pinError}</span>
                 </div>
               )}
 
+              {/* Keypad PIN dots representation */}
               <div className="w-full flex flex-col items-center">
-                <div className="flex justify-center gap-4 mb-8">
+                <div className="flex justify-center gap-5 mb-8">
                   {[0, 1, 2, 3].map((idx) => (
                     <div 
                       key={idx}
-                      className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-150 ${pin.length > idx ? "bg-emerald-400 border-emerald-400 scale-110 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "border-[#222] bg-transparent"}`}
+                      className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${pin.length > idx ? "bg-emerald-400 border-emerald-400 scale-125 shadow-[0_0_12px_rgba(52,211,153,0.8)]" : "border-[#222] bg-transparent"}`}
                     />
                   ))}
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 mb-6 max-w-[220px] mx-auto">
+                {/* Tactile Keypad matrix buttons */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
                   {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
                     <button
                       key={num}
                       type="button"
                       onClick={() => handleKeyPress(num)}
-                      className="w-12 h-12 rounded-full bg-[#050505] hover:bg-[#111] border border-[#1a1a1a] text-md font-medium text-white flex items-center justify-center active:scale-95 transition-all cursor-pointer"
+                      className="w-14 h-14 rounded-full bg-[#050505] hover:bg-[#111112] border border-[#1a1a1a] text-lg font-bold text-white flex items-center justify-center active:scale-95 transition-all cursor-pointer"
                     >
                       {num}
                     </button>
                   ))}
                   <button
                     type="button"
-                    onClick={() => { setPin(""); setPinError(""); }}
-                    className="w-12 h-12 rounded-full bg-[#050505] text-rose-500 border border-[#1a1a1a] text-[11px] font-medium flex items-center justify-center hover:bg-rose-950/20 cursor-pointer"
+                    onClick={handleClearPin}
+                    className="w-14 h-14 rounded-full bg-[#050505] hover:bg-rose-950/20 border border-[#1a1a1a] text-xs font-bold text-rose-400 flex items-center justify-center active:scale-95 transition-all cursor-pointer"
                   >
-                    Clear
+                    CLEAR
                   </button>
                   <button
                     type="button"
                     onClick={() => handleKeyPress("0")}
-                    className="w-12 h-12 rounded-full bg-[#050505] hover:bg-[#111] border border-[#1a1a1a] text-md font-medium text-white flex items-center justify-center active:scale-95 transition-all cursor-pointer"
+                    className="w-14 h-14 rounded-full bg-[#050505] hover:bg-[#111112] border border-[#1a1a1a] text-lg font-bold text-white flex items-center justify-center active:scale-95 transition-all cursor-pointer"
                   >
                     0
                   </button>
@@ -438,71 +655,82 @@
                       if (pin === "1505") {
                         setIsUnlocked(true);
                         setPin("");
-                        setPinError("");
                       } else {
-                        setPinError("PIN inválido! Digite 1505 para acessar.");
+                        setPinError("PIN incorreto! Utilize 1505.");
                         setPin("");
                       }
                     }}
-                    className="w-12 h-12 rounded-full bg-cyan-500 text-black font-bold text-xs flex items-center justify-center hover:bg-cyan-400 active:scale-95 transition-all cursor-pointer"
+                    className="w-14 h-14 rounded-full bg-cyan-500 text-black font-black text-xs flex items-center justify-center hover:bg-cyan-400 active:scale-95 transition-all cursor-pointer shadow-lg shadow-cyan-500/20"
                   >
-                    OK
+                    ENTRAR
                   </button>
                 </div>
               </div>
 
-              <div className="w-full border-t border-[#1a1a1a] pt-4 flex justify-center items-center text-xs">
-                <span className="text-[10px] text-slate-500 font-mono">Dispositivo protegido por senha PIN</span>
+              {/* Bottom footer encryption disclaimer */}
+              <div className="w-full border-t border-[#1a1a1a] pt-4 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest text-[#555] font-mono">
+                <Icon name="shield-check" className="w-4 h-4 text-cyan-400" />
+                <span>Encriptação AES-256 ativa</span>
               </div>
             </div>
           </div>
         );
       }
 
-      // ----------------------------------------------------
-      // DASHBOARD MAIN PAGE RENDER
+      // -----------------------------------------------------------------
+      // RENDER SECTION 2: COMPREHENSIVE MAIN DASHBOARD
+      // -----------------------------------------------------------------
       return (
-        <div className={`min-h-screen text-[#e0e0e0] font-sans pb-12 relative ${deviceLayout === "mobile" ? "max-w-md mx-auto border-x border-[#1a1a1a] shadow-2xl bg-[#000]" : "bg-[#050505]"}`}>
-          {/* Notification Alert Banner */}
-          {notificationMsg && (
-            <div className="fixed top-4 right-4 z-50 bg-[#0d0d0e] border border-cyan-500/30 text-white rounded-xl p-4 shadow-xl flex items-start gap-3 max-w-sm animate-bounce">
+        <div className={`min-h-screen text-[#e4e4e7] pb-16 relative transition-all duration-300 ${deviceLayout === "mobile" ? "max-w-md mx-auto border-x border-[#1a1a1a] bg-[#000] shadow-[0_0_64px_rgba(0,0,0,0.9)]" : "bg-[#050505]"}`}>
+          
+          {/* Custom Notification Toast Banner */}
+          {notification && (
+            <div className="fixed top-6 right-6 z-50 bg-[#0d0d0e] border border-cyan-500/30 text-white rounded-xl p-4 shadow-2xl flex items-start gap-3 max-w-sm animate-bounce no-print">
               <Icon name="bell-ring" className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
               <div>
-                <span className="text-[10px] text-cyan-400 uppercase font-mono font-bold tracking-wider">Aviso de Sistema</span>
-                <p className="text-xs text-slate-200 font-medium mt-0.5">{notificationMsg}</p>
+                <span className="text-[10px] text-cyan-400 uppercase font-mono font-bold tracking-wider">Aviso do Sistema</span>
+                <p className="text-xs text-slate-200 font-medium mt-0.5">{notification}</p>
               </div>
             </div>
           )}
 
-          {/* Upper Header control bar */}
-          <header className="border-b border-[#1a1a1a] bg-[#0d0d0e]/80 backdrop-blur-md sticky top-0 z-30 p-4">
+          {/* Sticky Header Nav Panel */}
+          <header className="border-b border-[#1a1a1a] bg-[#0d0d0e]/90 backdrop-blur-md sticky top-0 z-30 p-4 no-print">
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
-                  <span className="text-black font-extrabold italic text-md">E</span>
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
+                  <span className="text-black font-extrabold italic text-lg leading-none">E</span>
                 </div>
                 <div>
-                  <h1 className="text-sm font-bold text-white tracking-tight leading-none">EasyFinance</h1>
-                  <span className="text-[9px] text-[#555] font-mono select-none block mt-0.5">OPEN FINANCE ECOSYSTEM</span>
+                  <h1 className="text-md font-bold text-white tracking-tight leading-none">EasyFinance</h1>
+                  <span className="text-[9px] text-[#555] font-mono tracking-widest uppercase select-none block mt-0.5">OPEN FINANCE PORTAL</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Visualizer layout toggle */}
-                <div className="hidden sm:flex items-center bg-[#050505] p-1 rounded-lg border border-[#1a1a1a]">
-                  <button onClick={() => setDeviceLayout("desktop")} className={`p-1.5 rounded ${deviceLayout === "desktop" ? "bg-[#111] text-cyan-400" : "text-slate-500"}`}>
-                    <Icon name="laptop" className="w-3.5 h-3.5" />
+                {/* View Mode Switcher */}
+                <div className="hidden md:flex items-center bg-[#050505] p-1 rounded-lg border border-[#1a1a1a]">
+                  <button 
+                    onClick={() => setDeviceLayout("desktop")} 
+                    title="Visualização Desktop"
+                    className={`p-1.5 rounded-md transition-all ${deviceLayout === "desktop" ? "bg-[#111] text-cyan-400" : "text-slate-500 hover:text-slate-300"}`}
+                  >
+                    <Icon name="laptop" className="w-4 h-4" />
                   </button>
-                  <button onClick={() => setDeviceLayout("mobile")} className={`p-1.5 rounded ${deviceLayout === "mobile" ? "bg-[#111] text-cyan-400" : "text-slate-500"}`}>
-                    <Icon name="smartphone" className="w-3.5 h-3.5" />
+                  <button 
+                    onClick={() => setDeviceLayout("mobile")} 
+                    title="Visualização Mobile"
+                    className={`p-1.5 rounded-md transition-all ${deviceLayout === "mobile" ? "bg-[#111] text-cyan-400" : "text-slate-500 hover:text-slate-300"}`}
+                  >
+                    <Icon name="smartphone" className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Currency selector switcher */}
+                {/* Main Currency Selector */}
                 <select 
                   value={selectedCurrency}
-                  onChange={(e) => setSelectedDisplayCurrency(e.target.value)}
-                  className="bg-[#050505] border border-[#1a1a1a] p-1.5 rounded-lg text-xs font-mono font-bold text-cyan-400 cursor-pointer focus:outline-none"
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className="bg-[#050505] border border-[#1a1a1a] p-1.5 px-2.5 rounded-xl text-xs font-mono font-bold text-cyan-400 hover:border-[#2a2a2a] cursor-pointer focus:outline-none"
                 >
                   <option value="BRL">BRL (R$)</option>
                   <option value="USD">USD ($)</option>
@@ -510,111 +738,160 @@
                   <option value="GBP">GBP (£)</option>
                 </select>
 
-                {/* Lock trigger */}
+                {/* Force Pin Lock */}
                 <button 
-                  onClick={() => setIsUnlocked(false)}
-                  className="p-1.5 bg-[#050505] border border-[#1a1a1a] hover:bg-rose-950/20 hover:border-rose-900/30 text-rose-400 rounded-lg text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  onClick={() => {
+                    setIsUnlocked(false);
+                    showToast("Aplicativo bloqueado de forma preventiva.");
+                  }}
+                  className="p-1.5 px-3 bg-[#050505] border border-[#1a1a1a] hover:bg-rose-950/20 hover:border-rose-900/30 text-rose-400 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Icon name="unlock" className="w-3.5 h-3.5 text-rose-500" />
-                  <span className="hidden md:inline font-mono text-[10px] uppercase">Lock</span>
+                  <Icon name="lock" className="w-3.5 h-3.5 text-rose-500" />
+                  <span className="hidden sm:inline font-mono text-[9px] uppercase font-bold tracking-wider">Bloquear</span>
                 </button>
               </div>
             </div>
           </header>
 
+          {/* PRINT-ONLY VERSION TITLE BANNER */}
+          <div className="hidden print-only p-6 border-b border-gray-300 mb-8">
+            <h1 className="text-2xl font-bold text-black">EASYFINANCE • Extrato Consolidado</h1>
+            <p className="text-xs text-gray-500 mt-1">Gerado em {new Date().toLocaleDateString("pt-BR")} às {new Date().toLocaleTimeString("pt-BR")}</p>
+          </div>
+
           <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-            {/* KPI Cards Row */}
+
+            {/* Offline Mock Control Bar Banner (No Print) */}
+            <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-3 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 no-print">
+              <div className="flex items-center gap-2.5">
+                <div className="relative">
+                  <span className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full ${isOffline ? "bg-amber-500" : "bg-emerald-500 animate-pulse"}`} />
+                  <div className="w-8 h-8 rounded-lg bg-[#050505] border border-[#1a1a1a] flex items-center justify-center">
+                    <Icon name="cloud-lightning" className={`w-4 h-4 ${isOffline ? "text-amber-500" : "text-cyan-400"}`} />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white block">Sincronização de Dados Resiliente</span>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {isOffline 
+                      ? "Offline • Seus dados estão salvos de forma resiliente em LocalStorage" 
+                      : "Conectado • Replicação viva via EasyFinance Cloud Ativa"}
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => {
+                  setIsOffline(!isOffline);
+                  showToast(isOffline ? "Modo Conectado Ativo! Sincronizando com nuvem..." : "Modo Offline Ativo! Guardando dados localmente.");
+                }}
+                className={`p-1.5 px-3 rounded-xl text-[10px] font-mono uppercase font-bold tracking-wider border transition-all cursor-pointer ${isOffline ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"}`}
+              >
+                {isOffline ? "Ativar Modo Online" : "Simular Modo Offline"}
+              </button>
+            </div>
+
+            {/* KPI Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
+              {/* Card 1: Balance */}
+              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex items-center gap-4 print-card">
+                <div className="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
                   <Icon name="wallet" className="w-5 h-5 text-cyan-400" />
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Saldo Disponível</span>
                   <span className={`text-xl font-bold tracking-tight font-mono ${netBalance >= 0 ? "text-white" : "text-rose-400"}`}>
-                    {currencySymbols[selectedCurrency]} {netBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    {exchangeRates[selectedCurrency].symbol} {netBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
 
-              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              {/* Card 2: Income */}
+              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex items-center gap-4 print-card">
+                <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
                   <Icon name="trending-up" className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Receitas Acumuladas</span>
                   <span className="text-xl font-bold tracking-tight font-mono text-emerald-400">
-                    {currencySymbols[selectedCurrency]} {totalIncome.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    {exchangeRates[selectedCurrency].symbol} {totalIncome.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
 
-              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+              {/* Card 3: Expense */}
+              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex items-center gap-4 print-card">
+                <div className="w-11 h-11 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
                   <Icon name="trending-down" className="w-5 h-5 text-rose-400" />
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Despesas Acumuladas</span>
                   <span className="text-xl font-bold tracking-tight font-mono text-rose-400">
-                    {currencySymbols[selectedCurrency]} {totalExpense.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    {exchangeRates[selectedCurrency].symbol} {totalExpense.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Otimização & Limite Budget Monitor */}
-            <div className="p-5 bg-gradient-to-r from-[#0d0d0e] to-[#121214] border border-[#1a1a1a] rounded-2xl">
+            {/* Monthly Limit & Warning Threshold Box */}
+            <div className="p-5 bg-gradient-to-r from-[#0d0d0e] to-[#121214] border border-[#1a1a1a] rounded-2xl print-card">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <div>
                   <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Meta de Despesa Estimada</span>
-                  <h3 className="text-xs font-semibold text-white mt-1">Limite do Planejamento Mensal</h3>
+                  <h3 className="text-xs font-semibold text-white mt-1">Limite do Orçamento Mensal</h3>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-bold text-slate-200 block font-mono">
-                    R$ {totalExpense.toFixed(2)} de R$ 3000,00
+                    R$ {convertVal(totalExpense, selectedCurrency, "BRL").toFixed(2)} de R$ 3.000,00
                   </span>
                 </div>
               </div>
 
-              <div className="w-full h-2 bg-[#050505] rounded-full overflow-hidden border border-[#1a1a1a]">
+              <div className="w-full h-2.5 bg-[#050505] rounded-full overflow-hidden border border-[#1a1a1a]">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 ${totalExpense > 3000 ? "bg-rose-500" : "bg-cyan-400"}`}
-                  style={{ width: `${Math.min((totalExpense / 3000) * 100, 100)}%` }}
+                  className={`h-full rounded-full transition-all duration-500 ${convertVal(totalExpense, selectedCurrency, "BRL") > 3000 ? "bg-rose-500" : "bg-cyan-400"}`}
+                  style={{ width: `${Math.min((convertVal(totalExpense, selectedCurrency, "BRL") / 3000) * 100, 100)}%` }}
                 />
               </div>
 
-              {totalExpense > 3000 && (
-                <div className="mt-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-300 flex items-center gap-2">
+              {convertVal(totalExpense, selectedCurrency, "BRL") > 3000 && (
+                <div className="mt-3.5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 flex items-center gap-2.5 no-print">
                   <Icon name="alert-triangle" className="w-4 h-4 text-rose-500 shrink-0" />
-                  <span>Atenção! Você ultrapassou o orçamento projetado para o mês de Junho em {((totalExpense - 3000) / 3000 * 100).toFixed(0)}%.</span>
+                  <span>Atenção! Você ultrapassou o orçamento ideal planejado para o mês de Junho em {(((convertVal(totalExpense, selectedCurrency, "BRL") - 3000) / 3000) * 100).toFixed(0)}%. Considere reavaliar gastos em Lazer e Alimentação!</span>
                 </div>
               )}
             </div>
 
-            {/* Charts Visual Block with customized HTML elements */}
+            {/* Two-Column Responsive Chart & Stats Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Category allocation SVG bars */}
-              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex flex-col min-h-[300px]">
-                <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Despesas por Categoria</span>
-                <span className="text-[10px] text-slate-500 block mt-1">Alocação de custos mensais em moedas locais</span>
+              
+              {/* Box A: SVG Responsive Category Bar Chart */}
+              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex flex-col min-h-[320px] print-card">
+                <div>
+                  <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Custos por Categoria</span>
+                  <span className="text-[10px] text-slate-500 block mt-1">Alocação proporcional em moedas convertidas em tempo real</span>
+                </div>
 
-                <div className="flex-1 flex flex-col justify-center gap-4 mt-4">
-                  {Object.keys(expenseCategoriesAgg).length === 0 ? (
-                    <span className="text-xs text-slate-500 font-mono text-center">Nenhum gasto lançado para categorização.</span>
+                <div className="flex-1 flex flex-col justify-center gap-4 mt-5">
+                  {Object.keys(categoryTotals).length === 0 ? (
+                    <div className="py-12 text-center text-slate-500 font-mono text-xs">Nenhum gasto registrado para análise gráfica.</div>
                   ) : (
-                    Object.keys(expenseCategoriesAgg).map((catName) => {
-                      const amountCat = expenseCategoriesAgg[catName];
-                      const pct = Math.min((amountCat / (totalExpense || 1)) * 100, 100);
+                    Object.keys(categoryTotals).map((cat) => {
+                      const amount = categoryTotals[cat];
+                      const percentage = Math.min((amount / (totalExpense || 1)) * 100, 100);
                       return (
-                        <div key={catName} className="space-y-1">
+                        <div key={cat} className="space-y-1.5">
                           <div className="flex justify-between text-xs font-mono">
-                            <span className="text-slate-300 font-semibold">{catName}</span>
+                            <span className="text-slate-300 font-medium">{cat}</span>
                             <span className="text-slate-400">
-                              {pct.toFixed(0)}% ({currencySymbols[selectedCurrency]} {amountCat.toFixed(2)})
+                              {percentage.toFixed(0)}% ({exchangeRates[selectedCurrency].symbol} {amount.toFixed(2)})
                             </span>
                           </div>
-                          <div className="w-full h-1.5 bg-[#050505] rounded-full overflow-hidden border border-[#1a1a1a]">
-                            <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full" style={{ width: `${pct}%` }} />
+                          <div className="w-full h-2 bg-[#050505] rounded-full overflow-hidden border border-[#1a1a1a]">
+                            <div 
+                              className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500" 
+                              style={{ width: `${percentage}%` }}
+                            />
                           </div>
                         </div>
                       );
@@ -623,64 +900,86 @@
                 </div>
               </div>
 
-              {/* Consolidation Cashflow bars */}
-              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex flex-col min-h-[300px]">
-                <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Atividade Consolidada</span>
-                <span className="text-[10px] text-slate-500 block mt-1">Comparativo simplificado entre Receitas e Despesas</span>
+              {/* Box B: Cashflow Visual Progression */}
+              <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl flex flex-col min-h-[320px] print-card">
+                <div>
+                  <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Atividade Consolidada</span>
+                  <span className="text-[10px] text-slate-500 block mt-1">Comparativo direto de balança comercial de receitas e despesas</span>
+                </div>
 
-                <div className="flex-1 flex flex-col justify-center gap-6 mt-4">
-                  <div className="space-y-2">
+                <div className="flex-1 flex flex-col justify-center gap-8 mt-5">
+                  {/* Income progress line */}
+                  <div className="space-y-2.5">
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-emerald-400 font-semibold uppercase tracking-wider">Receitas</span>
-                      <span>{currencySymbols[selectedCurrency]} {totalIncome.toFixed(2)}</span>
+                      <span className="text-emerald-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" /> Receitas
+                      </span>
+                      <span className="font-bold text-slate-200">
+                        {exchangeRates[selectedCurrency].symbol} {totalIncome.toFixed(2)}
+                      </span>
                     </div>
-                    <div className="w-full h-4 bg-[#050505] rounded-lg overflow-hidden border border-[#1a1a1a] p-0.5">
-                      <div className="bg-emerald-400 h-full rounded-md transition-all duration-500" style={{ width: `${Math.min((totalIncome / (Math.max(totalIncome, totalExpense) || 1)) * 100, 100)}%` }} />
+                    <div className="w-full h-5 bg-[#050505] rounded-xl overflow-hidden border border-[#1a1a1a] p-0.5">
+                      <div 
+                        className="bg-emerald-400 h-full rounded-lg transition-all duration-500" 
+                        style={{ width: `${Math.min((totalIncome / (Math.max(totalIncome, totalExpense) || 1)) * 100, 100)}%` }}
+                      />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  {/* Expense progress line */}
+                  <div className="space-y-2.5">
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-rose-400 font-semibold uppercase tracking-wider">Despesas</span>
-                      <span>{currencySymbols[selectedCurrency]} {totalExpense.toFixed(2)}</span>
+                      <span className="text-rose-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-rose-400" /> Despesas
+                      </span>
+                      <span className="font-bold text-slate-200">
+                        {exchangeRates[selectedCurrency].symbol} {totalExpense.toFixed(2)}
+                      </span>
                     </div>
-                    <div className="w-full h-4 bg-[#050505] rounded-lg overflow-hidden border border-[#1a1a1a] p-0.5">
-                      <div className="bg-rose-400 h-full rounded-md transition-all duration-500" style={{ width: `${Math.min((totalExpense / (Math.max(totalIncome, totalExpense) || 1)) * 100, 100)}%` }} />
+                    <div className="w-full h-5 bg-[#050505] rounded-xl overflow-hidden border border-[#1a1a1a] p-0.5">
+                      <div 
+                        className="bg-rose-400 h-full rounded-lg transition-all duration-500" 
+                        style={{ width: `${Math.min((totalExpense / (Math.max(totalIncome, totalExpense) || 1)) * 100, 100)}%` }}
+                      />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick manual Lanzar custos form */}
-            <div className="p-6 bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 block mb-1">Adicionar Lançamento Manual</span>
-              <span className="text-[10px] text-slate-500 block mb-4">Insira despesas ou receitas diretamente em carteira local</span>
+            {/* Interactive Lançamento Adicionar Formulário (No Print) */}
+            <div className="p-6 bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl no-print">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 block mb-1">Novo Lançamento Manual</span>
+                <span className="text-[10px] text-slate-500 block mb-5">Adicione receitas ou despesas diretamente em sua carteira local</span>
+              </div>
 
-              <form onSubmit={handleAddTransaction} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <form onSubmit={handleAddTransaction} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                {/* Description */}
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Assinatura Netflix"
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                  className="bg-[#050505] border border-[#1a1a1a] p-2.5 rounded-xl text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                  placeholder="Ex: Consultoria Web"
+                  value={txDesc}
+                  onChange={(e) => setTxDesc(e.target.value)}
+                  className="bg-[#050505] border border-[#1a1a1a] p-2.5 rounded-xl text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all"
                 />
 
+                {/* Type and Category dropdowns */}
                 <div className="grid grid-cols-2 gap-2">
                   <select
-                    value={newType}
-                    onChange={(e) => setNewType(e.target.value)}
-                    className="bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs font-semibold text-slate-100"
+                    value={txType}
+                    onChange={(e) => setTxType(e.target.value)}
+                    className="bg-[#050505] border border-[#1a1a1a] p-2.5 rounded-xl text-xs font-semibold text-slate-100 focus:outline-none cursor-pointer"
                   >
                     <option value="expense">Despesa</option>
                     <option value="income">Receita</option>
                   </select>
 
                   <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-100"
+                    value={txCategory}
+                    onChange={(e) => setTxCategory(e.target.value)}
+                    className="bg-[#050505] border border-[#1a1a1a] p-2.5 rounded-xl text-xs text-slate-100 focus:outline-none cursor-pointer"
                   >
                     <option value="Alimentação">Alimentação</option>
                     <option value="Serviços">Serviços</option>
@@ -692,23 +991,25 @@
                   </select>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                {/* Value and Currency selection */}
+                <div className="grid grid-cols-3 gap-2 col-span-1">
                   <div className="col-span-2 relative">
-                    <span className="absolute left-2.5 top-2.5 text-[9px] text-slate-600 font-mono font-bold uppercase tracking-wide">Val</span>
+                    <span className="absolute left-2.5 top-2.5 text-[9px] text-slate-600 font-mono font-bold uppercase tracking-wider select-none">Val</span>
                     <input
                       type="number"
                       step="0.01"
                       required
-                      value={newVal}
-                      onChange={(e) => setNewVal(e.target.value)}
-                      className="w-full bg-[#050505] border border-[#1a1a1a] p-2 pl-9 rounded-xl text-xs text-slate-100"
+                      placeholder="0.00"
+                      value={txAmount}
+                      onChange={(e) => setTxAmount(e.target.value)}
+                      className="w-full bg-[#050505] border border-[#1a1a1a] p-2.5 pl-9 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500 font-mono"
                     />
                   </div>
 
                   <select
-                    value={newCurr}
-                    onChange={(e) => setNewCurr(e.target.value)}
-                    className="bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs font-bold text-cyan-400"
+                    value={txCurrency}
+                    onChange={(e) => setTxCurrency(e.target.value)}
+                    className="bg-[#050505] border border-[#1a1a1a] p-2.5 rounded-xl text-xs font-bold text-cyan-400 focus:outline-none cursor-pointer font-mono"
                   >
                     <option value="BRL">BRL</option>
                     <option value="USD">USD</option>
@@ -717,69 +1018,82 @@
                   </select>
                 </div>
 
+                {/* Account Selection */}
                 <select
-                  value={newBank}
-                  onChange={(e) => setNewBank(e.target.value)}
-                  className="bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-300"
+                  value={txAccount}
+                  onChange={(e) => setTxAccount(e.target.value)}
+                  className="bg-[#050505] border border-[#1a1a1a] p-2.5 rounded-xl text-xs text-slate-300 focus:outline-none cursor-pointer"
                 >
-                  <option value="Local">Dinheiro Físico</option>
+                  <option value="Local">Dinheiro Físico / Local</option>
                   {banks.filter(b => b.isConnected).map(b => (
-                    <option key={b.id} value={b.bankName}>{b.bankName}</option>
+                    <option key={b.id} value={b.bankName}>{b.bankName} (Open Finance)</option>
                   ))}
                 </select>
 
+                {/* Submit button */}
                 <button
                   type="submit"
-                  className="py-2.5 rounded-xl bg-white hover:bg-slate-200 font-semibold text-slate-950 text-[10px] uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="py-2.5 rounded-xl bg-white hover:bg-slate-200 font-bold text-slate-950 text-[10px] uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-white/5 active:scale-95"
                 >
-                  <Icon name="plus-circle" className="w-4 h-4 text-black" /> Lançar Custos
+                  <Icon name="plus-circle" className="w-4 h-4 text-black" /> Registrar Custo
                 </button>
               </form>
             </div>
 
-            {/* Bank Accounts Section */}
-            <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#1a1a1a]">
+            {/* Bank Accounts Open Finance Integrations Panel (No Print) */}
+            <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 no-print">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a1a1a] mb-5">
                 <div>
                   <h2 className="text-sm font-semibold tracking-wider text-white uppercase flex items-center gap-2">
-                    <Icon name="landmark" className="w-4 h-4 text-cyan-400" /> API Open Finance Integrada
+                    <Icon name="landmark" className="w-4 h-4 text-cyan-400" /> Open Finance • Bancos Conectados
                   </h2>
-                  <p className="text-xs text-slate-500 mt-1">Sincronize extratos de contas brasileiras via APIs seguras</p>
+                  <p className="text-xs text-slate-500 mt-1">Sincronize seus extratos de contas brasileiras de forma criptografada</p>
                 </div>
 
-                <button
-                  onClick={() => { setAuthStep("choose"); setShowConnectModal(true); }}
-                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs flex items-center gap-1.5 shadow shadow-cyan-500/10 cursor-pointer"
-                >
-                  <Icon name="plus" className="w-3.5 h-3.5 text-black" /> Conectar Banco
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  {banks.map(bank => !bank.isConnected && (
+                    <button
+                      key={bank.id}
+                      onClick={() => handleOpenBankConnect(bank)}
+                      className="px-2.5 py-1.5 rounded-xl bg-[#050505] border border-[#1a1a1a] hover:border-cyan-500/40 hover:bg-[#111] text-[11px] font-semibold text-slate-300 flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Icon name="plus" className="w-3.5 h-3.5" /> Conectar {bank.bankName}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {banks.filter(b => b.isConnected).length === 0 ? (
-                  <div className="py-8 text-center text-slate-500 font-mono text-xs">Nenhum banco conectado ao Open Finance no momento.</div>
+                  <div className="col-span-2 py-8 text-center text-slate-500 font-mono text-xs bg-[#050505] border border-dashed border-[#1c1c1e] rounded-xl">
+                    Nenhuma instituição sincronizada no momento. Use os botões acima para conectar uma API de banco.
+                  </div>
                 ) : (
                   banks.filter(b => b.isConnected).map((b) => (
-                    <div key={b.id} className="p-4 rounded-xl bg-[#050505] border border-[#1a1a1a] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                    <div key={b.id} className="p-4 rounded-xl bg-[#050505] border border-[#1a1a1a] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-[#2a2a2a] transition-all">
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-white text-xs">{b.bankName}</span>
-                          <span className="text-[9px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-1.5 rounded uppercase">API Ativa</span>
+                          <span className="text-[8px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-1.5 rounded uppercase font-bold tracking-wider">OPEN FINANCE ATIVO</span>
                         </div>
-                        <span className="text-[10px] text-slate-500 font-mono block mt-1">Conta: {b.accountNumber} • Conexão criptografada</span>
+                        <span className="text-[10px] text-slate-500 font-mono block mt-1.5">
+                          Agência/Conta: {b.accountNumber} • Conexão AES
+                        </span>
+                        {b.lastSynced && (
+                          <span className="text-[9px] text-slate-600 block mt-1">
+                            Sincronizado: {new Date(b.lastSynced).toLocaleTimeString("pt-BR")}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-mono font-bold text-slate-300">
-                          {currencySymbols[b.currency]} {b.balance.toFixed(2)}
+                      <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                        <span className="text-xs font-mono font-bold text-slate-200">
+                          {exchangeRates[b.currency].symbol} {b.balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </span>
                         <button 
-                          onClick={() => {
-                            setBanks(prev => prev.map(acc => acc.id === b.id ? { ...acc, isConnected: false } : acc));
-                            triggerAlertNotification(`Conexão com ${b.bankName} desativada.`);
-                          }}
-                          className="p-1 px-2 border border-rose-500/20 text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 rounded-lg text-[10px] font-semibold transition-all cursor-pointer"
+                          onClick={() => handleDisconnectBank(b.id, b.bankName)}
+                          className="p-1 px-2.5 border border-rose-500/25 text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
                         >
-                          Disconectar
+                          Desconectar
                         </button>
                       </div>
                     </div>
@@ -788,76 +1102,97 @@
               </div>
             </div>
 
-            {/* Boleto billing layout component */}
-            <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#1a1a1a]">
+            {/* Boleto DDA Automatizado Tracker Panel */}
+            <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 print-card">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a1a1a] mb-5 no-print">
                 <div>
                   <h2 className="text-sm font-semibold tracking-wider text-white uppercase flex items-center gap-2">
-                    <Icon name="receipt" className="w-4 h-4 text-cyan-400" /> Boleto DDA Automatizado
+                    <Icon name="receipt" className="w-4 h-4 text-cyan-400" /> Boleto DDA Automatizado (CPF)
                   </h2>
-                  <p className="text-xs text-slate-500 mt-1">Gerencie boletos a pagar emitidos no seu CPF via rastreador automático</p>
+                  <p className="text-xs text-slate-500 mt-1">Monitore e pague boletos emitidos em seu nome no sistema interbancário nacional</p>
                 </div>
 
                 <button 
                   onClick={() => setShowAddBoleto(!showAddBoleto)}
-                  className="px-3 py-1.5 rounded-lg border border-[#1a1a1a] hover:bg-[#111] text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-[#1a1a1a] hover:bg-[#111] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Icon name="plus" className="w-3.5 h-3.5 text-slate-400" /> Novo Boleto
+                  <Icon name="plus" className="w-3.5 h-3.5 text-slate-400" /> 
+                  {showAddBoleto ? "Fechar Formulário" : "Novo Boleto"}
                 </button>
               </div>
 
-              {/* Add Boleto Inline Box */}
+              {/* Add Custom Boleto Form */}
               {showAddBoleto && (
-                <form onSubmit={handleAddBoleto} className="mb-4 p-4 border border-[#1a1a1a] bg-[#050505] rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3 animate-slide-in">
-                  <input 
-                    type="text" required placeholder="Nome do Boleto" value={newBoletoTitle}
-                    onChange={(e) => setNewBoletoTitle(e.target.value)}
-                    className="bg-[#0c0c0d] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-100"
-                  />
-                  <input 
-                    type="number" required placeholder="Valor (R$)" value={newBoletoVal}
-                    onChange={(e) => setNewBoletoVal(e.target.value)}
-                    className="bg-[#0c0c0d] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-100"
-                  />
-                  <input 
-                    type="date" required value={newBoletoDate}
-                    onChange={(e) => setNewBoletoDate(e.target.value)}
-                    className="bg-[#0c0c0d] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-100"
-                  />
-                  <button type="submit" className="bg-white hover:bg-slate-200 text-slate-900 font-bold text-xs rounded-xl py-2 uppercase tracking-wider">
-                    Lançar Boleto
-                  </button>
+                <form onSubmit={handleCreateBoleto} className="mb-5 p-4 border border-[#1a1a1a] bg-[#050505] rounded-xl grid grid-cols-1 md:grid-cols-4 gap-3.5 animate-slide-in no-print">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase font-mono">Título do boleto</label>
+                    <input 
+                      type="text" required placeholder="Ex: Escola Infantil" value={boletoTitle}
+                      onChange={(e) => setBoletoTitle(e.target.value)}
+                      className="w-full bg-[#0c0c0d] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase font-mono">Valor (R$)</label>
+                    <input 
+                      type="number" step="0.01" required placeholder="0.00" value={boletoValue}
+                      onChange={(e) => setBoletoValue(e.target.value)}
+                      className="w-full bg-[#0c0c0d] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase font-mono">Data de vencimento</label>
+                    <input 
+                      type="date" required value={boletoDate}
+                      onChange={(e) => setBoletoDate(e.target.value)}
+                      className="w-full bg-[#0c0c0d] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button type="submit" className="w-full bg-white hover:bg-slate-200 text-slate-900 font-bold text-xs rounded-xl py-2.5 uppercase tracking-wider transition-all shadow cursor-pointer">
+                      Cadastrar Boleto
+                    </button>
+                  </div>
                 </form>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 {boletos.map((b) => (
-                  <div key={b.id} className="p-4 rounded-xl bg-[#050505] border border-[#1a1a1a] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                  <div key={b.id} className="p-4 rounded-xl bg-[#050505] border border-[#1a1a1a] flex flex-col md:flex-row justify-between items-start md:items-center gap-3.5 hover:border-[#2a2a2a] transition-all print-card">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${b.paid ? "bg-emerald-400" : "bg-amber-400"}`} />
+                        <span className={`w-2.5 h-2.5 rounded-full ${b.paid ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
                         <span className="font-bold text-white text-xs">{b.title}</span>
                       </div>
-                      <span className="text-[10px] text-slate-500 font-mono block mt-1">Vence em: {b.dueDate} • Tipo: {b.category}</span>
+                      <span className="text-[10px] text-slate-500 font-mono block mt-1.5">
+                        Vence em: {b.dueDate} • Categoria: {b.category}
+                      </span>
+                      {b.barcode && (
+                        <span className="text-[9px] text-[#444] font-mono block mt-1 select-all hover:text-slate-500 transition-all">
+                          Linha digitável: {b.barcode}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                      <span className="text-xs font-mono font-bold text-slate-300">
-                        R$ {b.amount.toFixed(2)}
+                      <span className="text-xs font-mono font-bold text-slate-200">
+                        R$ {b.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
-                      <div className="flex gap-2">
+                      
+                      <div className="flex gap-2 no-print">
                         {!b.paid ? (
                           <button 
                             onClick={() => handlePayBoleto(b)}
-                            className="p-1 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 rounded-lg text-[10px] font-bold cursor-pointer"
+                            className="p-1 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 rounded-lg text-[10px] font-bold tracking-wider transition-all cursor-pointer"
                           >
-                            Pagar
+                            PAGAR
                           </button>
                         ) : (
-                          <span className="text-[10px] text-emerald-400 font-bold border border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5 rounded uppercase">Pago</span>
+                          <span className="text-[9px] text-emerald-400 font-bold border border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5 rounded uppercase">QUITADO</span>
                         )}
                         <button 
                           onClick={() => handleDeleteBoleto(b.id)}
-                          className="p-1 text-slate-500 hover:text-rose-500 cursor-pointer"
+                          className="p-1.5 text-slate-600 hover:text-rose-500 transition-all cursor-pointer"
+                          title="Excluir boleto do DDA"
                         >
                           <Icon name="trash-2" className="w-3.5 h-3.5 text-slate-500" />
                         </button>
@@ -868,180 +1203,339 @@
               </div>
             </div>
 
-            {/* AI Advisor Intelligent Assistant Box */}
-            <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 block mb-1">
-                <Icon name="sparkles" className="w-4 h-4 text-cyan-400 inline mr-1.5 shrink-0" /> Assessor Financeiro EasyFinance GPT
-              </span>
-              <span className="text-[10px] text-slate-500 block mb-4">Análise local instantânea das suas receitas e planejamento</span>
+            {/* AI Advisor Intelligent Assistant Box (No Print) */}
+            <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 no-print">
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#1a1a1a]">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                  <Icon name="sparkles" className="w-4 h-4 text-cyan-400 shrink-0" /> Assessor Financeiro EasyFinance GPT
+                </span>
+                <span className="text-[9px] text-slate-500 font-mono">Inteligência Artificial Ativa</span>
+              </div>
 
-              <div ref={chatContainerRef} className="h-44 overflow-y-auto border border-[#1a1a1a] bg-[#050505] p-3 rounded-xl mb-3 space-y-2">
+              {/* Chat log window */}
+              <div className="h-56 overflow-y-auto border border-[#1a1a1a] bg-[#050505] p-4 rounded-xl mb-3 space-y-3">
                 {aiMessages.map((m) => (
                   <div key={m.id} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`p-2.5 rounded-xl text-xs max-w-xs ${m.sender === "user" ? "bg-cyan-500 text-black font-semibold" : "bg-[#0c0c0d] border border-[#1a1a1a] text-slate-300"}`}>
+                    <div className={`p-3 rounded-2xl text-xs max-w-sm leading-relaxed ${m.sender === "user" ? "bg-cyan-500 text-black font-semibold shadow-md shadow-cyan-500/5" : "bg-[#0c0c0d] border border-[#1a1a1a] text-slate-300"}`}>
                       {m.text}
                     </div>
                   </div>
                 ))}
+                
                 {aiLoading && (
                   <div className="flex justify-start">
-                    <span className="text-[10px] text-slate-500 font-mono animate-pulse">EasyFinance está analisando seus dados...</span>
+                    <div className="p-3 bg-[#0c0c0d] border border-[#1a1a1a] rounded-xl flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" />
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                      <span className="text-[10px] text-slate-500 font-mono ml-1">Analisando sua carteira local...</span>
+                    </div>
                   </div>
                 )}
+                <div ref={chatEndRef} />
               </div>
 
+              {/* Pre-fill pill tags */}
+              <div className="flex flex-wrap gap-1.5 mb-4 select-none">
+                <button 
+                  onClick={() => handleQuickChatPrompt("Análise rápida dos meus gastos")} 
+                  className="px-2.5 py-1 rounded-lg bg-[#111] hover:bg-[#161618] text-[10px] text-slate-400 border border-[#1c1c1f] transition-all cursor-pointer"
+                >
+                  Análise de Gastos
+                </button>
+                <button 
+                  onClick={() => handleQuickChatPrompt("Como posso economizar?")} 
+                  className="px-2.5 py-1 rounded-lg bg-[#111] hover:bg-[#161618] text-[10px] text-slate-400 border border-[#1c1c1f] transition-all cursor-pointer"
+                >
+                  Dicas de Economia
+                </button>
+                <button 
+                  onClick={() => handleQuickChatPrompt("Quais meus boletos pendentes?")} 
+                  className="px-2.5 py-1 rounded-lg bg-[#111] hover:bg-[#161618] text-[10px] text-slate-400 border border-[#1c1c1f] transition-all cursor-pointer"
+                >
+                  Boletos em Aberto
+                </button>
+              </div>
+
+              {/* Chat controls */}
               <div className="flex gap-2">
                 <input 
-                  type="text" placeholder="Ex: Quanto gastei esse mês?" value={aiInput}
+                  type="text" 
+                  placeholder="Pergunte sobre seus saldos, despesas, boletos ou investimentos..." 
+                  value={aiInput}
+                  onChange={(e) => setTxDesc(e.target.value)} /* Temporary mapping issue safe-check: use custom state */
                   onChange={(e) => setAiInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendAiMessage(aiInput)}
-                  className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl px-3 py-2 text-xs text-slate-100"
+                  onKeyDown={(e) => e.key === "Enter" && handleSendAiMessage()}
+                  className="flex-1 bg-[#050505] border border-[#1a1a1a] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
                 />
                 <button 
-                  onClick={() => handleSendAiMessage(aiInput)}
-                  className="bg-white hover:bg-slate-200 text-black px-4 rounded-xl text-xs font-bold leading-none cursor-pointer"
+                  onClick={handleSendAiMessage}
+                  className="bg-white hover:bg-slate-200 text-black px-5 font-bold rounded-xl text-xs transition-all flex items-center justify-center cursor-pointer active:scale-95"
                 >
                   Enviar
                 </button>
               </div>
-
-              {/* Suggestions Quick pills */}
-              <div className="flex flex-wrap gap-2 mt-3 select-none">
-                <button onClick={() => handleSendAiMessage("Quanto gasto esse mês?")} className="px-2.5 py-1 rounded bg-[#111] hover:bg-[#151515] text-[10px] text-slate-400 border border-[#1c1c1f] cursor-pointer">
-                  Análise de Gastos
-                </button>
-                <button onClick={() => handleSendAiMessage("Como posso economizar?")} className="px-2.5 py-1 rounded bg-[#111] hover:bg-[#151515] text-[10px] text-slate-400 border border-[#1c1c1f] cursor-pointer">
-                  Dicas para Guardar
-                </button>
-                <button onClick={() => handleSendAiMessage("Quantos boletos tenho para pagar?")} className="px-2.5 py-1 rounded bg-[#111] hover:bg-[#151515] text-[10px] text-slate-400 border border-[#1c1c1f] cursor-pointer">
-                  Resumo de Boletos
-                </button>
-              </div>
             </div>
 
-            {/* Offline Sync State tracker & logs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl border border-[#1a1a1a] bg-[#0d0d0e]">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Backup Cloud & Estado</span>
-                <span className="text-xs font-bold text-white block mt-1">Armazenamento Criptografado Ativo</span>
-                <p className="text-[11px] text-slate-500 mt-1">Backup local e replicação de chaves privadas em tempo real.</p>
-                <div className="flex gap-2 mt-3">
-                  <button onClick={handleTriggerBackup} className="px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold hover:bg-cyan-500/20 transition-all cursor-pointer">
-                    Backup Manual
+            {/* Custom Relatório & CSV Exporter Panel */}
+            <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 print-card">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a1a1a] mb-5 no-print">
+                <div>
+                  <h2 className="text-sm font-semibold tracking-wider text-white uppercase flex items-center gap-2">
+                    <Icon name="file-text" className="w-4 h-4 text-cyan-400" /> Exportação de Demonstrativos e Backups
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Gere arquivos em PDF ou faturas fiscais físicas de forma segura</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* PDF Print Button */}
+                <div className="p-4 rounded-xl bg-[#050505] border border-[#1a1a1a] hover:border-[#222] transition-all flex flex-col justify-between">
+                  <div>
+                    <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-widest font-bold">Impressora de PDF / Fatura</span>
+                    <h3 className="text-xs font-bold text-white mt-1.5">Gerar Demonstrativo Imprimível</h3>
+                    <p className="text-[11px] text-slate-500 mt-1">Abre a visualização de faturamento consolidado otimizada para salvar em PDF ou imprimir fisicamente.</p>
+                  </div>
+                  <button 
+                    onClick={handlePrintReport} 
+                    className="px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-semibold rounded-lg transition-all mt-4 w-full cursor-pointer text-center"
+                  >
+                    Imprimir / Salvar PDF
                   </button>
-                  <button onClick={handleExportCSV} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-all cursor-pointer">
-                    Exportar Relatório CSV
+                </div>
+
+                {/* CSV Button */}
+                <div className="p-4 rounded-xl bg-[#050505] border border-[#1a1a1a] hover:border-[#222] transition-all flex flex-col justify-between">
+                  <div>
+                    <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-widest font-bold">Planilha Eletrônica</span>
+                    <h3 className="text-xs font-bold text-white mt-1.5">Exportar Extrato em CSV</h3>
+                    <p className="text-[11px] text-slate-500 mt-1">Baixe um arquivo de texto com delimitadores compatível com Excel, Numbers e Google Sheets.</p>
+                  </div>
+                  <button 
+                    onClick={handleExportCSV} 
+                    className="px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 text-xs font-semibold rounded-lg transition-all mt-4 w-full cursor-pointer text-center"
+                  >
+                    Baixar Extrato .CSV
                   </button>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl border border-[#1a1a1a] bg-[#0d0d0e]">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Impressão de relatório</span>
-                <span className="text-xs font-bold text-white block mt-1">Autenticação Física EasyFinance</span>
-                <p className="text-[11px] text-slate-500 mt-1">Gere versões em PDF ou imprima faturas pendentes instantaneamente.</p>
-                <button onClick={handleTriggerPrint} className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all mt-3 cursor-pointer">
-                  Imprimir / PDF
-                </button>
+              {/* Redundancy Backup Logs table (No Print) */}
+              <div className="mt-6 pt-5 border-t border-[#1a1a1a] no-print">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Backup Criptografado Redundante</span>
+                    <h4 className="text-xs font-bold text-white mt-0.5">Logs de Sincronização em Nuvem</h4>
+                  </div>
+                  <button 
+                    onClick={handleTriggerCloudBackup}
+                    className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-200 text-slate-950 font-bold text-[10px] uppercase tracking-wider cursor-pointer active:scale-95 transition-all"
+                  >
+                    Enviar Novo Backup
+                  </button>
+                </div>
+
+                <div className="space-y-2.5">
+                  {backupLogs.map(log => (
+                    <div key={log.id} className="p-3 rounded-lg bg-[#050505] border border-[#1a1a1a] flex justify-between items-center text-[11px] font-mono">
+                      <div className="flex items-center gap-2">
+                        <Icon name="check-circle-2" className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-slate-300 font-bold">{log.provider}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-slate-500">
+                        <span>{new Date(log.date).toLocaleDateString("pt-BR")}</span>
+                        <span>{log.sizeStr}</span>
+                        <span className="text-emerald-400 uppercase font-bold text-[9px] bg-emerald-500/10 border border-emerald-500/20 px-1.5 rounded-md">Sucesso</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Historical Vault database table */}
-            <div className="p-6 bg-[#000] border border-[#1a1a1a] rounded-2xl">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 block mb-1">Ficha Geral de Lançamentos</span>
-              <span className="text-[10px] text-slate-500 block mb-4">Histórico instantâneo de transações locais</span>
+            {/* Main Transaction Logs List table */}
+            <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 print-card">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1a1a1a] mb-5 no-print">
+                <div>
+                  <h2 className="text-sm font-semibold tracking-wider text-white uppercase flex items-center gap-2">
+                    <Icon name="list-filter" className="w-4 h-4 text-cyan-400" /> Histórico Geral de Transações
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">Filtre e visualize todos os lançamentos manuais e Open Finance</p>
+                </div>
 
-              <div className="overflow-x-auto text-xs">
-                <table className="w-full text-left">
+                {/* Filters */}
+                <div className="flex flex-wrap gap-2">
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="bg-[#050505] border border-[#1a1a1a] p-1.5 px-3 rounded-xl text-xs text-slate-300 focus:outline-none cursor-pointer"
+                  >
+                    <option value="todos">Todos Tipos</option>
+                    <option value="income">Apenas Receitas</option>
+                    <option value="expense">Apenas Despesas</option>
+                  </select>
+
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="bg-[#050505] border border-[#1a1a1a] p-1.5 px-3 rounded-xl text-xs text-slate-300 focus:outline-none cursor-pointer"
+                  >
+                    <option value="todas">Todas Categorias</option>
+                    <option value="Alimentação">Alimentação</option>
+                    <option value="Serviços">Serviços</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Saúde">Saúde</option>
+                    <option value="Lazer">Lazer</option>
+                    <option value="Moradia">Moradia</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Transactions table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-[#1a1a1a] text-slate-500 uppercase font-mono text-[9px] tracking-wider">
-                      <th className="py-2.5">Data</th>
-                      <th>Descrição</th>
-                      <th>Categoria</th>
-                      <th>Banco</th>
-                      <th>Tipo</th>
-                      <th className="text-right">Valor</th>
-                      <th className="text-right">Valor ({selectedCurrency})</th>
+                    <tr className="border-b border-[#1a1a1a] text-[#555] text-[10px] uppercase tracking-widest font-mono">
+                      <th className="py-3 px-4 font-semibold">Data</th>
+                      <th className="py-3 px-4 font-semibold">Descrição</th>
+                      <th className="py-3 px-4 font-semibold">Categoria</th>
+                      <th className="py-3 px-4 font-semibold">Origem</th>
+                      <th className="py-3 px-4 font-semibold text-right">Valor</th>
+                      <th className="py-3 px-4 font-semibold text-center no-print">Ações</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {transactions.map((t) => (
-                      <tr key={t.id} className="border-b border-[#111112] text-[11px] hover:bg-[#050505]/40 text-slate-300">
-                        <td className="py-2.5 font-mono text-slate-500">{t.date}</td>
-                        <td className="font-semibold text-slate-100">{t.description}</td>
-                        <td>
-                          <span className="bg-[#111] px-2 py-0.5 border border-[#1a1a1a] text-slate-400 text-[10px] rounded">
-                            {t.category}
-                          </span>
-                        </td>
-                        <td className="font-mono text-slate-500 text-[10px]">{t.bankAccount || "Físico"}</td>
-                        <td>
-                          <span className={`font-mono text-[9px] font-bold uppercase ${t.type === "income" ? "text-emerald-400" : "text-rose-400"}`}>
-                            {t.type === "income" ? "Ganho" : "Saída"}
-                          </span>
-                        </td>
-                        <td className="text-right font-mono text-slate-400">{currencySymbols[t.currency]} {t.amount.toFixed(2)}</td>
-                        <td className="text-right font-mono font-bold text-white">
-                          {currencySymbols[selectedCurrency]} {convertVal(t.amount, t.currency, selectedCurrency).toFixed(2)}
+                  <tbody className="divide-y divide-[#121213]">
+                    {filteredTransactions.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="py-12 text-center text-slate-500 font-mono text-xs">
+                          Nenhum lançamento corresponde aos filtros selecionados.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredTransactions.map((t) => (
+                        <tr key={t.id} className="text-xs hover:bg-[#0c0c0d] transition-all group">
+                          <td className="py-3.5 px-4 font-mono text-slate-400">{t.date}</td>
+                          <td className="py-3.5 px-4 font-semibold text-white">
+                            {t.description}
+                            {t.bankAccount && (
+                              <span className="text-[9px] font-mono text-cyan-400 ml-1.5 bg-cyan-500/10 px-1 py-0.2 rounded uppercase">
+                                {t.bankAccount}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="bg-[#121213] border border-[#1c1c1f] text-slate-300 px-2 py-0.5 rounded-lg text-[10px]">
+                              {t.category}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-slate-400">
+                            {t.bankAccount ? `API ${t.bankAccount}` : "Carteira Local"}
+                          </td>
+                          <td className={`py-3.5 px-4 text-right font-mono font-bold ${t.type === "income" ? "text-emerald-400" : "text-rose-400"}`}>
+                            {t.type === "income" ? "+" : "-"} {exchangeRates[t.currency]?.symbol || t.currency} {t.amount.toFixed(2)}
+                          </td>
+                          <td className="py-3.5 px-4 text-center no-print">
+                            <button
+                              onClick={() => handleDeleteTransaction(t.id)}
+                              className="text-slate-600 hover:text-rose-500 p-1 opacity-60 hover:opacity-100 transition-all cursor-pointer"
+                              title="Remover lançamento"
+                            >
+                              <Icon name="trash-2" className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
+
           </main>
 
-          {/* Footer view indicator */}
-          <footer className="p-6 mt-12 border-t border-[#1a1a1a] text-center text-[10px] font-mono text-[#555] flex flex-col md:flex-row items-center justify-between gap-4 max-w-7xl mx-auto bg-[#050505]">
-            <span>EasyFinance © 2026. Todos os direitos reservados.</span>
-            <div className="flex gap-4">
-              <span>Open Finance BCB ativa</span>
-              <span>Encriptação AES-256</span>
-            </div>
-          </footer>
-
-          {/* Bank Connect Multi-Modal Modal */}
-          {showConnectModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-              <div className="w-full max-w-md p-6 bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-[#555] font-mono">Autenticação Integrada</h3>
-                  <button onClick={() => setShowConnectModal(false)} className="text-slate-400 hover:text-white">✕</button>
+          {/* Connect Institution Dialog Modal (No Print) */}
+          {showConnectModal && selectedBank && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm no-print">
+              <div className="w-full max-w-sm bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 shadow-2xl relative animate-slide-in">
+                
+                <div className="flex items-center gap-3.5 mb-5">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-black font-black text-lg italic shadow-lg`}>
+                    {selectedBank.bankName[0]}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase leading-none">Open Finance • {selectedBank.bankName}</h3>
+                    <span className="text-[10px] text-slate-400 mt-1 block">Conexão Interbancária via API Autorizada</span>
+                  </div>
                 </div>
 
-                {authStep === "choose" ? (
-                  <div className="space-y-2">
-                    <span className="text-xs font-bold text-white block">Selecione seu Banco:</span>
-                    {["Nubank", "Itaú", "Inter"].map((bName) => (
-                      <button 
-                        key={bName}
-                        onClick={() => { setSelectedBankName(bName); setAuthStep("credentials"); }}
-                        className="w-full text-left p-3 rounded-xl border border-[#1a1a1a] hover:border-cyan-500/50 bg-[#050505] text-xs font-semibold flex justify-between items-center transition-all cursor-pointer"
-                      >
-                        <span>{bName}</span>
-                        <span className="font-mono text-[9px] text-slate-500 uppercase">API Integrada</span>
-                      </button>
-                    ))}
+                <form onSubmit={handleConfirmBankConnection} className="space-y-4">
+                  <span className="text-xs text-slate-400 block">Autorize o EasyFinance a consultar seus saldos e extratos históricos de forma estritamente encriptada:</span>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase font-mono">Agência bancária</label>
+                    <input 
+                      type="text" required placeholder="Ex: 0001" value={bankAgency}
+                      onChange={(e) => setBankAgency(e.target.value)}
+                      className="w-full p-2.5 bg-[#050505] border border-[#1a1a1a] text-xs font-mono text-white rounded-xl focus:outline-none focus:border-cyan-500" 
+                    />
                   </div>
-                ) : (
-                  <form onSubmit={handleConfirmConnect} className="space-y-4">
-                    <span className="text-xs text-slate-400 block">Autorize o EasyFinance a buscar saldos consolidados no <strong>{selectedBankName}</strong> de forma encriptada:</span>
-                    <input type="text" required placeholder="Agência ou código" className="w-full p-2 bg-[#050505] border border-[#1a1a1a] text-xs font-mono text-white rounded-lg" />
-                    <input type="text" required placeholder="Nº da Conta Corrente" className="w-full p-2 bg-[#050505] border border-[#1a1a1a] text-xs font-mono text-white rounded-lg" />
-                    <input type="password" required placeholder="Senha de segurança de 6 dígitos" className="w-full p-2 bg-[#050505] border border-[#1a1a1a] text-xs font-mono text-white rounded-lg" />
-                    <button type="submit" className="w-full py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl">
-                      Autorizar Conexão API
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase font-mono">Número da Conta Corrente</label>
+                    <input 
+                      type="text" required placeholder="Ex: 12345-6" value={bankAccountNum}
+                      onChange={(e) => setBankAccountNum(e.target.value)}
+                      className="w-full p-2.5 bg-[#050505] border border-[#1a1a1a] text-xs font-mono text-white rounded-xl focus:outline-none focus:border-cyan-500" 
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase font-mono">Senha de Segurança</label>
+                    <input 
+                      type="password" required placeholder="Senha eletrônica de 6 dígitos" value={bankPassword}
+                      onChange={(e) => setBankPassword(e.target.value)}
+                      className="w-full p-2.5 bg-[#050505] border border-[#1a1a1a] text-xs font-mono text-white rounded-xl focus:outline-none focus:border-cyan-500" 
+                    />
+                  </div>
+
+                  <div className="flex gap-2.5 pt-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowConnectModal(false)}
+                      className="flex-1 py-2.5 rounded-xl border border-[#1a1a1a] text-slate-400 hover:text-white hover:bg-[#111] text-xs font-semibold cursor-pointer"
+                    >
+                      Cancelar
                     </button>
-                  </form>
-                )}
+                    <button 
+                      type="submit"
+                      disabled={isConnecting}
+                      className="flex-1 py-2.5 rounded-xl bg-white hover:bg-slate-200 text-slate-950 text-xs font-black uppercase tracking-wider cursor-pointer active:scale-95 disabled:opacity-50"
+                    >
+                      {isConnecting ? "Sincronizando..." : "Autorizar API"}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
+
+          {/* Footer view indicator */}
+          <footer className="p-6 mt-12 border-t border-[#1a1a1a] text-center text-[10px] font-mono text-[#555] flex flex-col md:flex-row items-center justify-between gap-4 max-w-7xl mx-auto bg-[#050505] no-print">
+            <span>EasyFinance © 2026. Todos os direitos reservados de forma resiliente.</span>
+            <div className="flex gap-4">
+              <span>Open Finance BCB ativa</span>
+              <span>Encriptado AES-256</span>
+              <span>Local Database Ativo</span>
+            </div>
+          </footer>
+
         </div>
       );
     }
 
-    const container = document.getElementById("root");
+    // Mount to root element
+    const container = document.getElementById('root');
     const root = ReactDOM.createRoot(container);
     root.render(<App />);
   </script>

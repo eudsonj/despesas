@@ -77,26 +77,24 @@ Mantenha as respostas focadas em dicas práticas de finanças, previsão de sald
   }
 });
 
-// Integrate Vite Middleware or Serve Production Build
+// Serve the standalone index.html directly for both development and production
 async function setupServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-    console.log("Vite dev middleware loaded.");
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-    console.log("Production static server loaded.");
-  }
+  const indexHtmlPath = path.join(process.cwd(), "index.html");
+
+  // Serve static files from root directory
+  app.use(express.static(process.cwd()));
+
+  app.get("/", (req, res) => {
+    res.sendFile(indexHtmlPath);
+  });
+
+  // SPA fallback to index.html
+  app.get("*", (req, res) => {
+    res.sendFile(indexHtmlPath);
+  });
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`EasyFinance Server running on port ${PORT}`);
+    console.log(`EasyFinance Server running on http://localhost:${PORT}`);
   });
 }
 
