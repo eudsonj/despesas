@@ -78,6 +78,11 @@ Mantenha as respostas focadas em dicas práticas de finanças, previsão de sald
   }
 });
 
+// Redirect any requests for the legacy standalone HTML file to the main React application
+app.get("/EasyFinance_Standalone.html", (req, res) => {
+  res.redirect(302, "/");
+});
+
 // Serve the application using Vite dev middleware in development, and static files in production
 async function setupServer() {
   if (process.env.NODE_ENV !== "production") {
