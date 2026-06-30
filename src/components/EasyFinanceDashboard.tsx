@@ -98,8 +98,8 @@ export default function EasyFinanceDashboard() {
       name: "Eudson Felipe",
       email: "eudsonfelipe598@gmail.com",
       defaultCurrency: "BRL",
-      isBiometricsActive: true,
-      isUnlocked: false, // Locked on startup for safety!
+      isBiometricsActive: false,
+      isUnlocked: true, // Começa desbloqueado para retirar o bloqueio do app
       cloudSyncEnabled: true,
       budgetMonthlyLimit: 3000
     };

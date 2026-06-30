@@ -3,10 +3,1708 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EasyFinance • Inteligência Financeira e Open Finance</title>
+  <title>EasyFinance - Inteligência Financeira Standalone</title>
+  
+  <!-- Fontes Premium -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;850&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            display: ['Space Grotesk', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & ReactDOM 18 -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel Standalone for on-the-fly TSX compilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Lucide Icons UMD -->
+  <script src="https://unpkg.com/lucide-react@0.344.0/dist/umd/lucide-react.js"></script>
+
+  <style>
+    /* Estilos Globais e Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #050505;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1c1c1e;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2c2c2e;
+    }
+    body {
+      background-color: #050505;
+      color: #e4e4e7;
+    }
+  </style>
 </head>
-<body class="bg-[#050505] text-[#e4e4e7] font-sans antialiased selection:bg-cyan-500 selection:text-black">
+<body class="bg-[#050505] text-[#e4e4e7] antialiased selection:bg-cyan-500 selection:text-black">
   <div id="root"></div>
-  <script type="module" src="/src/index.tsx"></script>
+
+  <!-- React Application Core -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+    
+    // Destructuring Lucide Icons from Global UMD
+    const { 
+      Wallet, TrendingUp, TrendingDown, Landmark, ArrowRightLeft, Link2, 
+      CheckCircle2, AlertCircle, RefreshCw, Smartphone, Key, Lock, Plus, 
+      Receipt, Calendar, Copy, Check, DollarSign, AlertTriangle, Trash2, 
+      BellRing, Sparkles, Send, Bot, Lightbulb, HelpCircle, ArrowRight, 
+      Loader2, Laptop, Sun, Moon, LogOut, PlusCircle, Clock, Unlock, 
+      Building, FileSpreadsheet, FileText, Wifi, WifiOff, HardDrive, Download
+    } = LucideReact;
+
+    // --- INITIAL DATA SEEDING ---
+    const INITIAL_TRANSACTIONS = [
+      { id: "1", type: "income", category: "Serviços", amount: 4800, currency: "BRL", description: "Desenvolvimento Frontend", date: "2026-06-03" },
+      { id: "2", type: "expense", category: "Alimentação", amount: 65.5, currency: "BRL", description: "Supermercado Pão de Açúcar", date: "2026-06-10" },
+      { id: "3", type: "expense", category: "Transporte", amount: 45, currency: "USD", description: "Viagem Uber EUA", date: "2026-06-12" },
+      { id: "4", type: "income", category: "Serviços", amount: 350, currency: "EUR", description: "Consultoria Internacional Alemanha", date: "2026-06-14" },
+      { id: "5", type: "expense", category: "Lazer", amount: 120, currency: "BRL", description: "Cinema e restaurante", date: "2026-06-15" }
+    ];
+
+    const INITIAL_BOLETOS = [
+      { id: "b1", title: "Condomínio Edifício", amount: 450, currency: "BRL", dueDate: "2026-06-30", paid: false, category: "Moradia", barcode: "34191.79001 01043.513184 91020.150008 7 97540000045000" },
+      { id: "b2", title: "Internet Fibra Vivo", amount: 129.9, currency: "BRL", dueDate: "2026-07-05", paid: false, category: "Serviços", barcode: "03399.79001 01043.513184 91020.150008 7 97540000012990" },
+      { id: "b3", title: "Seguro de Saúde", amount: 380, currency: "BRL", dueDate: "2026-06-15", paid: true, category: "Saúde", barcode: "00191.79001 01043.513184 91020.150008 7 97540000038000" }
+    ];
+
+    const INITIAL_BANKS = [
+      { id: "acc-1", bankName: "Nubank", balance: 1450.5, currency: "BRL", isConnected: true, accountNumber: "835251-2", color: "purple" },
+      { id: "acc-2", bankName: "Itaú", balance: 5200, currency: "BRL", isConnected: false, accountNumber: "20451-9", color: "orange" },
+      { id: "acc-3", bankName: "Inter", balance: 350, currency: "USD", isConnected: false, accountNumber: "91025-0", color: "orange" }
+    ];
+
+    const EXCHANGE_RATES = {
+      BRL: { code: "BRL", symbol: "R$", name: "Real", rateToBRL: 1 },
+      USD: { code: "USD", symbol: "$", name: "Dólar", rateToBRL: 5.42 },
+      EUR: { code: "EUR", symbol: "€", name: "Euro", rateToBRL: 5.85 },
+      GBP: { code: "GBP", symbol: "£", name: "Libra", rateToBRL: 6.90 }
+    };
+
+    const BANK_OPTIONS = [
+      { name: "Nubank", logoColor: "bg-purple-600 text-white", brandColor: "border-purple-600 focus:ring-purple-500", desc: "Conexão Open Finance instantânea" },
+      { name: "Itaú", logoColor: "bg-orange-500 text-white", brandColor: "border-orange-500 focus:ring-orange-400", desc: "Integração segura com token digital" },
+      { name: "Inter", logoColor: "bg-orange-600 text-white", brandColor: "border-orange-600 focus:ring-orange-500", desc: "API direta para conta e investimentos" },
+      { name: "Banco do Brasil", logoColor: "bg-yellow-400 text-blue-900 font-bold", brandColor: "border-yellow-400 focus:ring-blue-600", desc: "Sincronização de contas e poupança" },
+      { name: "Bradesco", logoColor: "bg-red-600 text-white font-bold", brandColor: "border-red-600 focus:ring-red-500", desc: "Conexão de extratos correntes" }
+    ];
+
+    // --- APPLICATION ROOT COMPONENT ---
+    function App() {
+      // Core states with localStorage recovery
+      const [transactions, setTransactions] = useState(() => {
+        const saved = localStorage.getItem("easyfinance_transactions");
+        return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
+      });
+      const [boletos, setBoletos] = useState(() => {
+        const saved = localStorage.getItem("easyfinance_boletos");
+        return saved ? JSON.parse(saved) : INITIAL_BOLETOS;
+      });
+      const [bankAccounts, setBankAccounts] = useState(() => {
+        const saved = localStorage.getItem("easyfinance_banks");
+        return saved ? JSON.parse(saved) : INITIAL_BANKS;
+      });
+      const [backupLogs, setBackupLogs] = useState(() => {
+        const saved = localStorage.getItem("easyfinance_backups");
+        return saved ? JSON.parse(saved) : [
+          { id: "l1", provider: "EasyFinance Secure Cloud", date: new Date().toISOString(), sizeStr: "12 KB", status: "success" }
+        ];
+      });
+      const [userProfile, setUserProfile] = useState(() => {
+        return {
+          name: "Eudson Felipe",
+          email: "eudsonfelipe598@gmail.com",
+          defaultCurrency: "BRL",
+          isBiometricsActive: false,
+          isUnlocked: true,
+          cloudSyncEnabled: true,
+          budgetMonthlyLimit: 3000
+        };
+      });
+
+      const [selectedDisplayCurrency, setSelectedDisplayCurrency] = useState("BRL");
+      const [deviceLayout, setDeviceLayout] = useState("desktop");
+      const [aiApiKey, setAiApiKey] = useState(() => localStorage.getItem("easyfinance_gemini_key") || "");
+
+      // Sync data to localStorage on changes
+      useEffect(() => { localStorage.setItem("easyfinance_transactions", JSON.stringify(transactions)); }, [transactions]);
+      useEffect(() => { localStorage.setItem("easyfinance_boletos", JSON.stringify(boletos)); }, [boletos]);
+      useEffect(() => { localStorage.setItem("easyfinance_banks", JSON.stringify(bankAccounts)); }, [bankAccounts]);
+      useEffect(() => { localStorage.setItem("easyfinance_backups", JSON.stringify(backupLogs)); }, [backupLogs]);
+      useEffect(() => { localStorage.setItem("easyfinance_gemini_key", aiApiKey); }, [aiApiKey]);
+
+      // Conversions and mathematics
+      const convertAmount = (amount, from, to) => {
+        if (from === to) return amount;
+        const inBrl = amount * EXCHANGE_RATES[from].rateToBRL;
+        return inBrl / EXCHANGE_RATES[to].rateToBRL;
+      };
+
+      const displaySymbol = EXCHANGE_RATES[selectedDisplayCurrency].symbol;
+
+      const totalIncome = useMemo(() => {
+        return transactions
+          .filter(t => t.type === "income")
+          .reduce((sum, t) => sum + convertAmount(t.amount, t.currency, selectedDisplayCurrency), 0);
+      }, [transactions, selectedDisplayCurrency]);
+
+      const totalExpense = useMemo(() => {
+        return transactions
+          .filter(t => t.type === "expense")
+          .reduce((sum, t) => sum + convertAmount(t.amount, t.currency, selectedDisplayCurrency), 0);
+      }, [transactions, selectedDisplayCurrency]);
+
+      const netBalance = totalIncome - totalExpense;
+
+      // Lock screen control
+      if (!userProfile.isUnlocked) {
+        return <BiometricLockScreen onUnlock={() => setUserProfile(p => ({ ...p, isUnlocked: true }))} />;
+      }
+
+      return (
+        <div className="min-h-screen bg-[#050505] text-[#d4d4d8] font-sans">
+          
+          {/* HEADER BAR */}
+          <header className="p-4 border-b bg-[#0d0d0e]/95 backdrop-blur-md border-[#1a1a1a] flex flex-col md:flex-row items-center justify-between gap-4 sticky top-0 z-40">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-violet-600 flex items-center justify-center shadow shadow-cyan-500/10">
+                <span className="text-white font-bold text-lg italic tracking-wider font-display">E</span>
+              </div>
+              <div>
+                <span className="text-sm font-semibold tracking-wider text-white uppercase block leading-none font-display">
+                  EASYFINANCE
+                </span>
+                <span className="text-[9px] text-slate-500 font-mono block tracking-widest leading-none mt-1">SISTEMA FINANCEIRO AUTÔNOMO</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Currency Selector */}
+              <div className="flex items-center gap-1 bg-[#050505] p-1 rounded-lg border border-[#1a1a1a]">
+                <span className="text-[9px] text-slate-500 font-mono pl-1 uppercase tracking-wider">Visualização:</span>
+                {["BRL", "USD", "EUR", "GBP"].map((curr) => (
+                  <button
+                    key={curr}
+                    onClick={() => setSelectedDisplayCurrency(curr)}
+                    className={`px-2 py-0.5 text-[10px] font-semibold transition-all rounded ${selectedDisplayCurrency === curr ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/20" : "text-slate-500 hover:text-white"}`}
+                  >
+                    {EXCHANGE_RATES[curr].symbol} {curr}
+                  </button>
+                ))}
+              </div>
+
+              {/* View Layout Simulator */}
+              <div className="flex bg-[#050505] p-1 rounded-lg border border-[#1a1a1a]">
+                <button
+                  onClick={() => setDeviceLayout("desktop")}
+                  className={`p-1 px-2 py-0.5 rounded text-[10px] font-semibold leading-none flex items-center gap-1 ${deviceLayout === "desktop" ? "bg-white/10 text-cyan-400" : "text-slate-500 hover:text-white"}`}
+                >
+                  <Laptop className="w-3.5 h-3.5" /> Desktop
+                </button>
+                <button
+                  onClick={() => setDeviceLayout("mobile")}
+                  className={`p-1 px-2 py-0.5 rounded text-[10px] font-semibold leading-none flex items-center gap-1 ${deviceLayout === "mobile" ? "bg-white/10 text-violet-400" : "text-slate-500 hover:text-white"}`}
+                >
+                  <Smartphone className="w-3.5 h-3.5" /> Celular
+                </button>
+              </div>
+
+              {/* Instant Lock app */}
+              <button
+                onClick={() => setUserProfile(p => ({ ...p, isUnlocked: false }))}
+                className="p-1.5 px-3 rounded-lg bg-red-950/20 border border-red-500/20 text-red-450 hover:bg-red-950/40 transition-all flex items-center gap-1.5 text-[10px] tracking-wider uppercase font-semibold cursor-pointer"
+              >
+                <Lock className="w-3 h-3 text-red-400" /> Bloquear
+              </button>
+            </div>
+          </header>
+
+          <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+            <div className={`mx-auto transition-all duration-300 ${deviceLayout === "mobile" ? "max-w-[400px] border-[12px] border-slate-800 rounded-[48px] shadow-2xl bg-[#050505] overflow-hidden p-4 relative" : "space-y-6"}`}>
+              
+              {/* MOBILE SHELL TOP BAR */}
+              {deviceLayout === "mobile" && (
+                <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono mb-4 px-2">
+                  <span>09:41</span>
+                  <div className="flex items-center gap-1 text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>EasyFinance Mobile</span>
+                  </div>
+                </div>
+              )}
+
+              {/* PROFILE HEADLINE */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 pb-4 border-b border-[#1a1a1a]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/20 flex items-center justify-center font-bold text-cyan-400 font-display">
+                    EF
+                  </div>
+                  <div>
+                    <h1 className="text-sm font-semibold text-white tracking-wider uppercase">EasyFinance de {userProfile.name}</h1>
+                    <p className="text-xs text-slate-500 mt-0.5">Visão consolidada e controle de caixa via Open Finance</p>
+                  </div>
+                </div>
+                
+                <div className="text-right text-[10px] text-slate-500 font-mono">
+                  <span>Plataforma Standalone offline-first</span>
+                </div>
+              </div>
+
+              {/* KPI CARDS */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="p-5 rounded-2xl bg-[#0d0d0e] border border-[#1a1a1a] relative overflow-hidden">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">Saldo Consolidado</span>
+                  <div className="flex items-baseline gap-1 mt-1.5">
+                    <span className="text-sm text-slate-400 font-mono">{displaySymbol}</span>
+                    <h3 className="text-2xl font-semibold text-white font-mono tracking-tight">
+                      {netBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </h3>
+                  </div>
+                  <div className="mt-3 text-[10px] text-slate-500 flex items-center gap-1 uppercase">
+                    <Wallet className="w-3.5 h-3.5 text-cyan-400" /> Disponível em carteiras
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-[#0d0d0e] border border-[#1a1a1a] relative overflow-hidden">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">Total de Receitas</span>
+                  <div className="flex items-baseline gap-1 mt-1.5">
+                    <span className="text-sm text-slate-400 font-mono">{displaySymbol}</span>
+                    <h3 className="text-2xl font-semibold text-emerald-400 font-mono tracking-tight">
+                      {totalIncome.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </h3>
+                  </div>
+                  <div className="mt-3 text-[10px] text-emerald-400 flex items-center gap-1 uppercase">
+                    <TrendingUp className="w-3.5 h-3.5" /> Ganhos computados
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-[#0d0d0e] border border-[#1a1a1a] relative overflow-hidden">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">Total de Despesas</span>
+                  <div className="flex items-baseline gap-1 mt-1.5">
+                    <span className="text-sm text-slate-400 font-mono">{displaySymbol}</span>
+                    <h3 className="text-2xl font-semibold text-rose-450 font-mono tracking-tight">
+                      {totalExpense.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </h3>
+                  </div>
+                  <div className="mt-3 text-[10px] text-rose-400 flex items-center gap-1 uppercase">
+                    <TrendingDown className="w-3.5 h-3.5" /> Saídas computadas
+                  </div>
+                </div>
+              </div>
+
+              {/* BUDGET TARGET PROGRESS */}
+              <div className="p-5 bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-200">Orçamento Limite Mensal</span>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Meta máxima de despesas locais configuradas</p>
+                  </div>
+                  <div className="text-right font-mono text-xs">
+                    <span className="text-white">{displaySymbol} {totalExpense.toFixed(0)}</span> / <span className="text-slate-500">{displaySymbol} {userProfile.budgetMonthlyLimit}</span>
+                  </div>
+                </div>
+                
+                <div className="w-full bg-[#151515] rounded-full h-1.5 overflow-hidden border border-[#222]">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      (totalExpense / userProfile.budgetMonthlyLimit) > 0.9 
+                        ? "bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" 
+                        : "bg-cyan-400"
+                    }`}
+                    style={{ width: `${Math.min(100, (totalExpense / userProfile.budgetMonthlyLimit) * 100)}%` }}
+                  />
+                </div>
+
+                {(totalExpense / userProfile.budgetMonthlyLimit) > 1 && (
+                  <div className="mt-3 p-2 bg-rose-500/10 border border-rose-500/20 text-[10px] text-rose-400 rounded-lg flex items-center gap-1.5 animate-pulse uppercase font-semibold">
+                    <AlertCircle className="w-4 h-4 shrink-0" /> ALERTA: Você ultrapassou a meta de teto orçamentário configurada!
+                  </div>
+                )}
+              </div>
+
+              {/* CHARTS WORKSPACE (PIXEL-PERFECT INLINE SVG CHARTS) */}
+              <div className={`grid grid-cols-1 ${deviceLayout === "mobile" ? "" : "lg:grid-cols-2"} gap-6 mb-6`}>
+                <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl">
+                  <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider font-display">Alocação por Categoria</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 mb-4">Detalhamento proporcional das despesas em carteira</p>
+                  
+                  <div className="flex flex-col sm:flex-row items-center justify-around gap-4 min-h-[200px]">
+                    <CategoryDonutChart transactions={transactions} currency={selectedDisplayCurrency} convert={convertAmount} />
+                  </div>
+                </div>
+
+                <div className="bg-[#0d0d0e] border border-[#1a1a1a] p-5 rounded-2xl">
+                  <span className="text-xs font-semibold uppercase text-slate-400 tracking-wider font-display">Fluxo Comparativo</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 mb-4 font-sans">Análise visual de Receitas vs Despesas</p>
+                  
+                  <div className="flex items-center justify-center min-h-[200px] w-full">
+                    <CashflowBarChart income={totalIncome} expense={totalExpense} symbol={displaySymbol} />
+                  </div>
+                </div>
+              </div>
+
+              {/* TWO-COLUMN MODULE SYSTEM */}
+              <div className={`grid grid-cols-1 ${deviceLayout === "mobile" ? "" : "lg:grid-cols-2"} gap-6 mb-6`}>
+                {/* Bank Sync Module */}
+                <BankAccountSync 
+                  accounts={bankAccounts}
+                  setAccounts={setBankAccounts}
+                  transactions={transactions}
+                  setTransactions={setTransactions}
+                  convert={convertAmount}
+                />
+
+                {/* Boletos Agenda */}
+                <BoletoManager 
+                  boletos={boletos}
+                  setBoletos={setBoletos}
+                  transactions={transactions}
+                  setTransactions={setTransactions}
+                  symbol={displaySymbol}
+                />
+              </div>
+
+              {/* TRANSACTION ADDITION INLINE */}
+              <div className="p-5 bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl mb-6">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 block">Lançar Transação Manual</span>
+                <p className="text-[10px] text-slate-500 mt-0.5 mb-4">Insira despesas ou receitas diretamente no fluxo financeiro</p>
+                <QuickAddForm 
+                  accounts={bankAccounts} 
+                  setAccounts={setBankAccounts} 
+                  transactions={transactions} 
+                  setTransactions={setTransactions} 
+                  convert={convertAmount}
+                />
+              </div>
+
+              {/* BACKUPS & REPORT EXPORTER */}
+              <div className={`grid grid-cols-1 ${deviceLayout === "mobile" ? "" : "lg:grid-cols-2"} gap-6 mb-6`}>
+                <NuvemSync 
+                  backupLogs={backupLogs}
+                  setBackupLogs={setBackupLogs}
+                  cloudSync={userProfile.cloudSyncEnabled}
+                  toggleCloudSync={() => setUserProfile(p => ({ ...p, cloudSyncEnabled: !p.cloudSyncEnabled }))}
+                />
+
+                <ReportExporter 
+                  transactions={transactions} 
+                  boletos={boletos} 
+                  symbol={displaySymbol} 
+                  selectedMonth="todos" 
+                />
+              </div>
+
+              {/* GEMINI AI CHAT INTEGRATION */}
+              <div className="mb-6">
+                <AiGeniusModule 
+                  transactions={transactions}
+                  boletos={boletos}
+                  currency={selectedDisplayCurrency}
+                  apiKey={aiApiKey}
+                  setApiKey={setAiApiKey}
+                />
+              </div>
+
+              {/* LOGS LISTING TABLE */}
+              <div className="p-5 bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 block">Histórico de Transações</span>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Lista geral de lançamentos no livro caixa</p>
+                  </div>
+                  
+                  {transactions.length > 0 && (
+                    <button 
+                      onClick={() => {
+                        if (confirm("Deseja realmente limpar todo o histórico local?")) {
+                          setTransactions([]);
+                        }
+                      }}
+                      className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 hover:underline"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Limpar tudo
+                    </button>
+                  )}
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-400">
+                    <thead>
+                      <tr className="border-b border-[#1a1a1a] text-slate-500 font-semibold uppercase tracking-wider text-[9px] font-mono">
+                        <th className="py-2.5">Data</th>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Canal / Origem</th>
+                        <th className="text-right">Fluxo</th>
+                        <th className="text-right">Moeda Original</th>
+                        <th className="text-right">Valor ({selectedDisplayCurrency})</th>
+                        <th className="text-center">Excluir</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-slate-600 font-mono">
+                            Nenhum registro lançado no sistema.
+                          </td>
+                        </tr>
+                      ) : (
+                        [...transactions]
+                          .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((t) => {
+                            const inSelected = convertAmount(t.amount, t.currency, selectedDisplayCurrency);
+                            return (
+                              <tr key={t.id} className="border-b border-[#111112] hover:bg-[#050505]/40 transition-all text-[11px]">
+                                <td className="py-3 font-mono text-slate-500">{t.date}</td>
+                                <td className="font-semibold text-slate-200">{t.description}</td>
+                                <td>
+                                  <span className="px-1.5 py-0.5 rounded bg-[#151515] text-slate-400 font-medium border border-[#222]">
+                                    {t.category}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className="text-[10px] font-mono text-slate-500">
+                                    {t.bankAccount ? `API • ${t.bankAccount}` : "Carteira Física"}
+                                  </span>
+                                </td>
+                                <td className="text-right">
+                                  <span className={`font-semibold uppercase tracking-wider text-[9px] ${t.type === "income" ? "text-emerald-400" : "text-rose-450"}`}>
+                                    {t.type === "income" ? "Ganho" : "Saída"}
+                                  </span>
+                                </td>
+                                <td className="text-right font-mono text-slate-500">
+                                  {EXCHANGE_RATES[t.currency].symbol} {t.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                </td>
+                                <td className={`text-right font-bold font-mono ${t.type === "income" ? "text-emerald-400" : "text-rose-450"}`}>
+                                  {displaySymbol} {inSelected.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                </td>
+                                <td className="text-center">
+                                  <button
+                                    onClick={() => setTransactions(prev => prev.filter(item => item.id !== t.id))}
+                                    className="p-1 text-slate-600 hover:text-red-400 transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* FOOTER */}
+              <footer className="p-4 mt-8 border-t border-[#1a1a1a] text-center text-[10px] font-mono text-slate-650 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span>EasyFinance © 2026 • Inteligência de Fluxo de Caixa</span>
+                <div className="flex gap-4">
+                  <span>Open Finance Ativo</span>
+                  <span>•</span>
+                  <span>Proteção SHA-512</span>
+                  <span>•</span>
+                  <span>LocalStorage Local</span>
+                </div>
+              </footer>
+
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    // --- BIOMETRIC LOCK SCREEN COMPONENT ---
+    function BiometricLockScreen({ onUnlock }) {
+      const [pin, setPin] = useState("");
+      const [error, setError] = useState("");
+
+      const handleKeypad = (num) => {
+        setError("");
+        if (pin.length < 4) {
+          const newPin = pin + num;
+          setPin(newPin);
+          if (newPin === "1234") {
+            setTimeout(() => {
+              onUnlock();
+            }, 150);
+          } else if (newPin.length === 4) {
+            setTimeout(() => {
+              setError("PIN incorreto! Use o PIN de teste padrão: 1234");
+              setPin("");
+            }, 250);
+          }
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-[#050505] text-slate-100 flex flex-col items-center justify-center p-4">
+          <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-3xl p-8 w-full max-w-sm text-center shadow-xl animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center mx-auto mb-6 shadow shadow-cyan-500/20">
+              <Lock className="w-8 h-8 text-black" />
+            </div>
+            
+            <h2 className="text-lg font-semibold tracking-tight text-white font-display">Segurança Requerida</h2>
+            <p className="text-xs text-slate-500 mt-1">EasyFinance Standalone Protegido</p>
+
+            <div className="my-6">
+              <div className="flex justify-center gap-3 mb-4">
+                {[...Array(4)].map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`w-3.5 h-3.5 rounded-full border border-slate-700 transition-all ${i < pin.length ? "bg-cyan-400 border-cyan-400" : "bg-transparent"}`} 
+                  />
+                ))}
+              </div>
+              {error ? (
+                <p className="text-[11px] text-rose-450 leading-snug">{error}</p>
+              ) : (
+                <p className="text-[10px] text-slate-500">Dica: Digite o PIN padrão <strong className="text-slate-300">1234</strong> para desbloquear</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 max-w-[240px] mx-auto">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => handleKeypad(n.toString())}
+                  className="w-14 h-14 rounded-full bg-[#151515] border border-[#222] hover:bg-slate-800 text-white font-bold text-sm flex items-center justify-center active:scale-95 transition-all cursor-pointer mx-auto"
+                >
+                  {n}
+                </button>
+              ))}
+              <div />
+              <button
+                onClick={() => handleKeypad("0")}
+                className="w-14 h-14 rounded-full bg-[#151515] border border-[#222] hover:bg-slate-800 text-white font-bold text-sm flex items-center justify-center active:scale-95 transition-all cursor-pointer mx-auto"
+              >
+                0
+              </button>
+              <div />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- CUSTOM PIXEL-PERFECT SVG DONUT COMPONENT ---
+    function CategoryDonutChart({ transactions, currency, convert }) {
+      const categoryTotals = useMemo(() => {
+        return transactions
+          .filter(t => t.type === "expense")
+          .reduce((acc, t) => {
+            const val = convert(t.amount, t.currency, currency);
+            acc[t.category] = (acc[t.category] || 0) + val;
+            return acc;
+          }, {});
+      }, [transactions, currency]);
+
+      const data = Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
+      const total = data.reduce((sum, item) => sum + item.value, 0);
+
+      const COLORS = ["#06b6d4", "#a855f7", "#ec4899", "#f59e0b", "#3b82f6", "#10b981", "#ef4444"];
+
+      if (data.length === 0) {
+        return <p className="text-xs text-slate-550 font-mono">Nenhuma despesa para classificar.</p>;
+      }
+
+      // Calculate SVG segmented values
+      let cumulativePercent = 0;
+      const r = 50;
+      const circ = 2 * Math.PI * r;
+
+      return (
+        <React.Fragment>
+          {/* Donut SVG Ring */}
+          <div className="relative w-36 h-36 shrink-0">
+            <svg width="100%" height="100%" viewBox="0 0 140 140" className="-rotate-90">
+              <circle cx="70" cy="70" r={r} fill="transparent" stroke="#151515" strokeWidth="15" />
+              {data.map((item, index) => {
+                const percent = item.value / total;
+                const strokeLength = percent * circ;
+                const strokeOffset = circ - strokeLength;
+                const currentOffset = cumulativePercent * circ;
+                cumulativePercent += percent;
+
+                return (
+                  <circle
+                    key={item.name}
+                    cx="70"
+                    cy="70"
+                    r={r}
+                    fill="transparent"
+                    stroke={COLORS[index % COLORS.length]}
+                    strokeWidth="15"
+                    strokeDasharray={`${strokeLength} ${circ}`}
+                    strokeDashoffset={-currentOffset}
+                    className="transition-all duration-300 hover:stroke-[18px] cursor-pointer"
+                  >
+                    <title>{item.name}: {EXCHANGE_RATES[currency].symbol} {item.value.toFixed(2)} ({Math.round(percent*100)}%)</title>
+                  </circle>
+                );
+              })}
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-[10px] text-slate-500 font-mono uppercase font-bold leading-none">Total</span>
+              <span className="text-sm font-semibold text-white font-mono mt-1">
+                {EXCHANGE_RATES[currency].symbol}{Math.round(total)}
+              </span>
+            </div>
+          </div>
+
+          {/* Legend Labels List */}
+          <div className="flex-1 space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+            {data.map((item, index) => (
+              <div key={item.name} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                  <span className="text-slate-300 uppercase tracking-wide text-[11px] font-medium">{item.name}</span>
+                </div>
+                <span className="font-mono text-slate-400 font-semibold pl-4">
+                  {EXCHANGE_RATES[currency].symbol}{item.value.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </React.Fragment>
+      );
+    }
+
+    // --- CUSTOM PIXEL-PERFECT SVG BAR CHART ---
+    function CashflowBarChart({ income, expense, symbol }) {
+      const maxVal = Math.max(income, expense, 100);
+      const incomeHeight = (income / maxVal) * 120;
+      const expenseHeight = (expense / maxVal) * 120;
+
+      return (
+        <div className="w-full max-w-[280px] bg-[#050505] p-4 rounded-xl border border-[#1a1a1a] flex flex-col">
+          <div className="flex justify-around items-end h-[140px] pb-2 border-b border-[#1a1a1a] relative">
+            
+            {/* Grid Line Marks */}
+            <div className="absolute left-0 right-0 top-[25%] border-t border-dashed border-[#1a1a1a]/40" />
+            <div className="absolute left-0 right-0 top-[50%] border-t border-dashed border-[#1a1a1a]/40" />
+            <div className="absolute left-0 right-0 top-[75%] border-t border-dashed border-[#1a1a1a]/40" />
+
+            {/* Income Bar */}
+            <div className="flex flex-col items-center group w-1/3">
+              <span className="text-[10px] text-emerald-400 font-bold font-mono mb-1 bg-emerald-500/10 px-1 rounded">
+                {symbol}{Math.round(income)}
+              </span>
+              <div 
+                style={{ height: `${incomeHeight}px` }}
+                className="w-12 bg-gradient-to-t from-emerald-600 to-cyan-400 rounded-t-lg transition-all duration-500 shadow-[0_0_12px_rgba(52,211,153,0.15)] group-hover:scale-105"
+              />
+              <span className="text-[10px] font-semibold text-slate-400 mt-2 tracking-wide uppercase">Receitas</span>
+            </div>
+
+            {/* Expense Bar */}
+            <div className="flex flex-col items-center group w-1/3">
+              <span className="text-[10px] text-rose-450 font-bold font-mono mb-1 bg-rose-500/10 px-1 rounded">
+                {symbol}{Math.round(expense)}
+              </span>
+              <div 
+                style={{ height: `${expenseHeight}px` }}
+                className="w-12 bg-gradient-to-t from-red-600 to-pink-500 rounded-t-lg transition-all duration-500 shadow-[0_0_12px_rgba(239,68,68,0.15)] group-hover:scale-105"
+              />
+              <span className="text-[10px] font-semibold text-slate-400 mt-2 tracking-wide uppercase">Despesas</span>
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    // --- OPEN FINANCE BANK SYNCHRONIZATION MODULE ---
+    function BankAccountSync({ accounts, setAccounts, transactions, setTransactions, convert }) {
+      const [showModal, setShowModal] = useState(false);
+      const [selectedBank, setSelectedBank] = useState("");
+      const [credentialsStep, setCredentialsStep] = useState(false);
+      const [syncingId, setSyncingId] = useState(null);
+
+      const handleStartConnect = (bankName) => {
+        setSelectedBank(bankName);
+        setCredentialsStep(true);
+      };
+
+      const handleConfirmConnect = (e) => {
+        e.preventDefault();
+        setAccounts(prev => prev.map(acc => {
+          if (acc.bankName === selectedBank) {
+            return { ...acc, isConnected: true, lastSynced: new Date().toISOString() };
+          }
+          return acc;
+        }));
+
+        // Seed simulated transactions to have interactive data!
+        const pulledAmount = selectedBank === "Nubank" ? 350 : selectedBank === "Itaú" ? 1800 : 980;
+        const targetAcc = accounts.find(a => a.bankName === selectedBank) || {};
+        
+        const newSeed = {
+          id: Math.random().toString(),
+          type: "income",
+          category: "Serviços",
+          amount: pulledAmount,
+          currency: targetAcc.currency || "BRL",
+          description: `Importação Automática ${selectedBank}`,
+          date: new Date().toISOString().split("T")[0],
+          bankAccount: selectedBank
+        };
+
+        setTransactions(prev => [newSeed, ...prev]);
+
+        // Clean up steps
+        setCredentialsStep(false);
+        setShowModal(false);
+      };
+
+      const handleTriggerSync = (id, bankName) => {
+        setSyncingId(id);
+        setTimeout(() => {
+          setAccounts(prev => prev.map(acc => {
+            if (acc.id === id) {
+              return { ...acc, lastSynced: new Date().toISOString() };
+            }
+            return acc;
+          }));
+          setSyncingId(null);
+        }, 1200);
+      };
+
+      const handleDisconnect = (id) => {
+        setAccounts(prev => prev.map(acc => {
+          if (acc.id === id) {
+            return { ...acc, isConnected: false };
+          }
+          return acc;
+        }));
+      };
+
+      const activeAccounts = accounts.filter(a => a.isConnected);
+
+      return (
+        <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#1a1a1a]">
+            <div>
+              <h2 className="text-xs font-semibold tracking-wider text-white uppercase flex items-center gap-2 font-display">
+                <Landmark className="w-4 h-4 text-cyan-400" />
+                Integração APIs Bancárias
+              </h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">Sincronize com os grandes bancos via Open Finance</p>
+            </div>
+            
+            <button
+              onClick={() => { setCredentialsStep(false); setShowModal(true); }}
+              className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-[10px] flex items-center gap-1 shadow shadow-cyan-500/10 transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" /> Vincular
+            </button>
+          </div>
+
+          <div className="flex-1 space-y-3 max-h-[220px] overflow-y-auto pr-1">
+            {activeAccounts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6 text-center bg-[#050505] rounded-xl border border-dashed border-[#1a1a1a]">
+                <Link2 className="w-7 h-7 text-slate-700 mb-1.5 animate-pulse" />
+                <p className="text-[11px] font-semibold text-slate-400">Nenhum banco integrado</p>
+                <p className="text-[10px] text-slate-600 mt-0.5 px-6">Vincule contas brasileiras para importação direta de extratos.</p>
+              </div>
+            ) : (
+              activeAccounts.map((account) => (
+                <div key={account.id} className="p-3.5 rounded-xl bg-[#050505] border border-[#1a1a1a] flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-900/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-black text-xs shrink-0">
+                      {account.bankName[0]}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-xs text-white uppercase tracking-wider">{account.bankName}</span>
+                        <span className="text-[8px] uppercase font-mono px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Ativo</span>
+                      </div>
+                      <p className="text-[9px] text-slate-500 font-mono mt-0.5">AG: 1234 | CC: {account.accountNumber}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#1a1a1a]">
+                    <div className="text-right">
+                      <span className="text-[8px] text-slate-550 block uppercase tracking-wider font-mono">Saldo Importado</span>
+                      <span className="font-mono text-xs text-white font-medium">
+                        {EXCHANGE_RATES[account.currency].symbol} {account.balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => handleTriggerSync(account.id, account.bankName)}
+                        disabled={syncingId === account.id}
+                        className="p-1.5 rounded-lg bg-[#0d0d0e] border border-[#1a1a1a] text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${syncingId === account.id ? "animate-spin text-cyan-400" : ""}`} />
+                      </button>
+                      <button
+                        onClick={() => handleDisconnect(account.id)}
+                        className="px-2 py-1 bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-500/25 rounded-lg text-[9px] font-semibold"
+                      >
+                        Sair
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* CONNECT BANK MODAL POPUP */}
+          {showModal && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in scale-95 duration-150">
+                <div className="bg-[#0a0a0b] border-b border-[#1a1a1a] p-4 flex items-center justify-between">
+                  <span className="font-semibold text-xs uppercase tracking-wider text-white">Conexão Open Finance</span>
+                  <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white text-xs bg-white/5 w-6 h-6 rounded-full flex items-center justify-center">✕</button>
+                </div>
+
+                <div className="p-5">
+                  {!credentialsStep ? (
+                    <div className="space-y-3">
+                      <p className="text-[11px] text-slate-400 leading-relaxed mb-3">Selecione o seu banco para iniciar o consentimento e autenticação segura.</p>
+                      <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                        {BANK_OPTIONS.map((bank) => (
+                          <button
+                            key={bank.name}
+                            onClick={() => handleStartConnect(bank.name)}
+                            className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-[#050505] hover:bg-[#121214] border border-[#1a1a1a] transition-all text-left group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-black text-xs shrink-0">
+                              {bank.name[0]}
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-slate-300 group-hover:text-cyan-400 transition-colors uppercase">{bank.name}</span>
+                              <p className="text-[10px] text-slate-500">{bank.desc}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleConfirmConnect} className="space-y-4">
+                      <div className="flex items-center gap-2.5 p-3 bg-[#050505] rounded-xl border border-[#1a1a1a]">
+                        <div className="w-8 h-8 bg-cyan-900/50 text-cyan-400 border border-cyan-500/20 rounded-lg flex items-center justify-center font-black text-xs">{selectedBank[0]}</div>
+                        <div>
+                          <span className="text-[9px] text-slate-500 uppercase tracking-widest font-mono">Canal Autenticador</span>
+                          <h4 className="text-xs font-bold text-cyan-400 uppercase leading-none">{selectedBank}</h4>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[9px] text-slate-400 uppercase block mb-1">Agência</label>
+                          <input type="text" defaultValue="0001" required className="w-full bg-[#050505] border border-[#1a1a1a] p-2 rounded-lg text-xs font-mono text-slate-100 focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-[9px] text-slate-400 uppercase block mb-1">Conta Corrente</label>
+                          <input type="text" defaultValue="12345-6" required className="w-full bg-[#050505] border border-[#1a1a1a] p-2 rounded-lg text-xs font-mono text-slate-100 focus:outline-none" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] text-slate-400 uppercase block mb-1">Senha do Aplicativo</label>
+                        <input type="password" placeholder="••••••••" required className="w-full bg-[#050505] border border-[#1a1a1a] p-2 rounded-lg text-xs text-slate-100 focus:outline-none" />
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-3 border-t border-[#1a1a1a]">
+                        <button type="button" onClick={() => setCredentialsStep(false)} className="px-3 py-1.5 rounded-lg bg-[#0d0d0e] border border-[#1a1a1a] text-slate-400 text-xs">Voltar</button>
+                        <button type="submit" className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-semibold text-xs">Autorizar</button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- BOLETOS AND BILLS MANAGER COMPONENT ---
+    function BoletoManager({ boletos, setBoletos, transactions, setTransactions, symbol }) {
+      const [showForm, setShowForm] = useState(false);
+      const [title, setTitle] = useState("");
+      const [amount, setAmount] = useState("");
+      const [dueDate, setDueDate] = useState("");
+      const [category, setCategory] = useState("Moradia");
+      const [copiedId, setCopiedId] = useState(null);
+      const [pushAlert, setPushAlert] = useState("");
+
+      const handleAdd = (e) => {
+        e.preventDefault();
+        if (!title || !amount || !dueDate) return;
+
+        const barcodeSim = Array.from({ length: 47 }, () => Math.floor(Math.random() * 10)).join("");
+        const formatedBarcode = `${barcodeSim.substring(0,5)}.${barcodeSim.substring(5,10)} ${barcodeSim.substring(10,15)}.${barcodeSim.substring(15,20)} ${barcodeSim.substring(20,25)}.${barcodeSim.substring(25,30)} 9 12345678900000`;
+
+        const newB = {
+          id: Math.random().toString(),
+          title,
+          amount: parseFloat(amount),
+          currency: "BRL",
+          dueDate,
+          paid: false,
+          category,
+          barcode: formatedBarcode
+        };
+
+        setBoletos(prev => [newB, ...prev]);
+        setTitle("");
+        setAmount("");
+        setDueDate("");
+        setShowForm(false);
+
+        triggerNotification(`Boleto "${title}" cadastrado com sucesso na agenda!`);
+      };
+
+      const handlePay = (item) => {
+        setBoletos(prev => prev.map(b => b.id === item.id ? { ...b, paid: true } : b));
+        
+        // Push paid boleto as an actual debit transaction
+        const newT = {
+          id: Math.random().toString(),
+          type: "expense",
+          category: item.category,
+          amount: item.amount,
+          currency: "BRL",
+          description: `Pagamento de Boleto: ${item.title}`,
+          date: new Date().toISOString().split("T")[0]
+        };
+
+        setTransactions(prev => [newT, ...prev]);
+        triggerNotification(`Sucesso! Boleto "${item.title}" debitado do caixa.`);
+      };
+
+      const handleCopy = (id, text) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 1500);
+      };
+
+      const triggerNotification = (msg) => {
+        setPushAlert(msg);
+        setTimeout(() => setPushAlert(""), 4500);
+      };
+
+      return (
+        <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 flex flex-col h-full relative">
+          
+          {/* Notification Toast */}
+          {pushAlert && (
+            <div className="absolute top-4 left-4 right-4 z-20 bg-cyan-950 border border-cyan-500/20 rounded-xl p-3 flex items-start gap-2.5 shadow-lg animate-in fade-in slide-in-from-top-2 duration-150">
+              <BellRing className="w-4 h-4 text-cyan-400 mt-0.5 animate-bounce" />
+              <div className="flex-1">
+                <span className="text-[9px] uppercase font-bold text-cyan-400 tracking-wider font-mono">Notificação de Cobrança</span>
+                <p className="text-[11px] text-slate-200 leading-snug mt-0.5">{pushAlert}</p>
+              </div>
+              <button onClick={() => setPushAlert("")} className="text-slate-400 hover:text-white text-xs">✕</button>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#1a1a1a]">
+            <div>
+              <h2 className="text-xs font-semibold tracking-wider text-white uppercase flex items-center gap-2 font-display">
+                <Calendar className="w-4 h-4 text-cyan-400" />
+                Boletos & Contas a Pagar
+              </h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">Gestão de vencimentos e códigos de barras</p>
+            </div>
+            
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="px-2.5 py-1.5 rounded-lg bg-[#151515] hover:bg-[#202022] text-slate-300 hover:text-white text-[10px] font-semibold transition-all border border-[#222]"
+            >
+              {showForm ? "Cancelar" : "Novo Boleto"}
+            </button>
+          </div>
+
+          {showForm && (
+            <form onSubmit={handleAdd} className="bg-[#050505] p-3 rounded-xl border border-[#1a1a1a] mb-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[9px] text-slate-400 uppercase block mb-1">Nome / Cedente</label>
+                  <input type="text" required placeholder="Ex: Conta de Luz, Aluguel" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-[#0d0d0e] border border-[#1a1a1a] p-2 rounded-lg text-xs text-white focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-[9px] text-slate-400 uppercase block mb-1">Valor do boleto</label>
+                  <input type="number" step="0.01" required placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-[#0d0d0e] border border-[#1a1a1a] p-2 rounded-lg text-xs text-white focus:outline-none" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[9px] text-slate-400 uppercase block mb-1">Vencimento</label>
+                  <input type="date" required value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full bg-[#0d0d0e] border border-[#1a1a1a] p-2 rounded-lg text-xs text-white focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-[9px] text-slate-400 uppercase block mb-1">Categoria</label>
+                  <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-[#0d0d0e] border border-[#1a1a1a] p-2 rounded-lg text-xs text-white focus:outline-none h-[34px]">
+                    <option value="Moradia">Moradia</option>
+                    <option value="Serviços">Serviços</option>
+                    <option value="Saúde">Saúde</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Lazer">Lazer</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" className="w-full py-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-semibold text-xs rounded-lg">Agendar Título</button>
+            </form>
+          )}
+
+          <div className="flex-1 space-y-3 max-h-[200px] overflow-y-auto pr-1">
+            {boletos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6 text-center bg-[#050505] rounded-xl border border-dashed border-[#1a1a1a]">
+                <Receipt className="w-7 h-7 text-slate-700 mb-1.5" />
+                <p className="text-[11px] text-slate-400 font-semibold">Nenhum boleto pendente</p>
+              </div>
+            ) : (
+              [...boletos]
+                .sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                .map((b) => (
+                  <div key={b.id} className={`p-3.5 rounded-xl border ${b.paid ? "bg-[#050505]/40 border-[#1a1a1a] opacity-60" : "bg-[#050505] border-[#1a1a1a]"}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-start gap-2.5">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${b.paid ? "bg-[#151515] text-slate-500" : "bg-cyan-950 text-cyan-400"}`}>
+                          <Receipt className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-semibold text-xs text-white uppercase">{b.title}</span>
+                            <span className="text-[8px] bg-slate-900 border border-[#222] px-1 py-0.5 rounded text-slate-400 uppercase font-mono">{b.category}</span>
+                          </div>
+                          <p className="text-[9px] text-slate-500 font-mono mt-0.5">Vencimento: {new Date(b.dueDate).toLocaleDateString("pt-BR")}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#1a1a1a]">
+                        <span className="text-xs font-bold text-white font-mono">{symbol} {b.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                        
+                        <div className="flex gap-1.5">
+                          {b.paid ? (
+                            <span className="px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded">Pago</span>
+                          ) : (
+                            <button onClick={() => handlePay(b)} className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-black font-semibold rounded text-[9px] border border-emerald-500/20 transition-all">Pagar</button>
+                          )}
+                          <button onClick={() => setBoletos(prev => prev.filter(item => item.id !== b.id))} className="p-1 text-slate-650 hover:text-red-400 border border-[#1a1a1a] rounded"><Trash2 className="w-3 h-3" /></button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {!b.paid && (
+                      <div className="mt-2 pt-2 border-t border-[#1a1a1a] flex items-center justify-between text-[8px] font-mono bg-[#09090a] p-1.5 rounded">
+                        <span className="text-slate-600 truncate mr-2">Linha Digitável: {b.barcode.substring(0,25)}...</span>
+                        <button onClick={() => handleCopy(b.id, b.barcode)} className="text-cyan-400 hover:text-white shrink-0 font-bold flex items-center gap-1">
+                          {copiedId === b.id ? <><Check className="w-2.5 h-2.5 text-emerald-400" /> Copiado</> : <><Copy className="w-2.5 h-2.5" /> Copiar</>}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // --- QUICK ADD TRANSACTION MANUAL FORM ---
+    function QuickAddForm({ accounts, setAccounts, transactions, setTransactions, convert }) {
+      const [desc, setDesc] = useState("");
+      const [type, setType] = useState("expense");
+      const [category, setCategory] = useState("Alimentação");
+      const [val, setVal] = useState("");
+      const [curr, setCurr] = useState("BRL");
+      const [bank, setBank] = useState("Local");
+
+      const handleAdd = (e) => {
+        e.preventDefault();
+        if (!desc.trim() || !val) return;
+
+        const amountNum = parseFloat(val);
+        const t = {
+          id: Math.random().toString(),
+          type,
+          category,
+          amount: amountNum,
+          currency: curr,
+          description: desc,
+          date: new Date().toISOString().split("T")[0],
+          bankAccount: bank !== "Local" ? bank : undefined
+        };
+
+        setTransactions(prev => [t, ...prev]);
+
+        // If connected bank selected, adjust balance accordingly
+        if (bank !== "Local") {
+          setAccounts(prev => prev.map(acc => {
+            if (acc.bankName === bank) {
+              const transValInBank = convert(amountNum, curr, acc.currency);
+              const diff = type === "income" ? transValInBank : -transValInBank;
+              return { ...acc, balance: acc.balance + diff };
+            }
+            return acc;
+          }));
+        }
+
+        setDesc("");
+        setVal("");
+      };
+
+      return (
+        <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <input type="text" required placeholder="Ex: Uber, Mercado, Freelance" value={desc} onChange={(e) => setDesc(e.target.value)} className="bg-[#050505] border border-[#1a1a1a] p-2.5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500" />
+          
+          <div className="grid grid-cols-2 gap-2">
+            <select value={type} onChange={(e) => setType(e.target.value)} className="bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs font-semibold text-white">
+              <option value="expense">Despesa</option>
+              <option value="income">Receita</option>
+            </select>
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className="bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs text-white">
+              <option value="Alimentação">Alimentação</option>
+              <option value="Serviços">Serviços</option>
+              <option value="Lazer">Lazer</option>
+              <option value="Moradia">Moradia</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Saúde">Saúde</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <input type="number" step="0.01" required placeholder="0.00" value={val} onChange={(e) => setVal(e.target.value)} className="col-span-2 bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs text-white focus:outline-none" />
+            <select value={curr} onChange={(e) => setCurr(e.target.value)} className="bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs font-bold text-cyan-400">
+              <option value="BRL">BRL</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
+
+          <select value={bank} onChange={(e) => setBank(e.target.value)} className="bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs text-slate-300">
+            <option value="Local">Carteira Física (Espécie)</option>
+            {accounts.filter(a => a.isConnected).map(a => (
+              <option key={a.id} value={a.bankName}>{a.bankName} (Open Finance)</option>
+            ))}
+          </select>
+
+          <button type="submit" className="py-2 rounded-xl bg-white hover:bg-slate-200 text-slate-950 font-semibold text-xs uppercase flex items-center justify-center gap-1.5 transition-all">
+            <PlusCircle className="w-4 h-4" /> Lançar
+          </button>
+        </form>
+      );
+    }
+
+    // --- REPLICATOR CLOUD & SYNC SYSTEM BAR ---
+    function NuvemSync({ backupLogs, setBackupLogs, cloudSync, toggleCloudSync }) {
+      const [status, setStatus] = useState("online");
+      const [loading, setLoading] = useState(false);
+
+      const handleBackupForce = () => {
+        setLoading(true);
+        setTimeout(() => {
+          const size = Math.floor(10 + Math.random() * 30);
+          const newLog = {
+            id: Math.random().toString(),
+            provider: "EasyFinance Secure Cloud",
+            date: new Date().toISOString(),
+            sizeStr: `${size} KB`,
+            status: "success"
+          };
+          setBackupLogs(prev => [newLog, ...prev]);
+          setLoading(false);
+        }, 1200);
+      };
+
+      return (
+        <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#1a1a1a]">
+            <div>
+              <h2 className="text-xs font-semibold tracking-wider text-white uppercase flex items-center gap-2 font-display">
+                <Cloud className="w-4 h-4 text-cyan-400" />
+                Resiliência Offline & Nuvem
+              </h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">Sincronizador integrado e estado do servidor</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 flex-1">
+            <div className="p-3 bg-[#050505] border border-[#1a1a1a] rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${status === "offline" ? "bg-red-500/10 text-red-400" : "bg-cyan-500/10 text-cyan-400 animate-pulse"}`}>
+                  {status === "offline" ? <WifiOff className="w-4 h-4" /> : <Wifi className="w-4 h-4" />}
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-white block leading-none uppercase">Modo de Operação</span>
+                  <span className="text-[10px] text-slate-500 mt-0.5 block">{status === "offline" ? "Modo Offline LocalStorage" : "Canais de Sincronização Ativos"}</span>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setStatus(s => s === "online" ? "offline" : "online")}
+                className={`px-2.5 py-1 text-[9px] font-bold border rounded-lg uppercase tracking-wide cursor-pointer ${status === "offline" ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/30" : "bg-red-950/20 text-red-400 border-red-500/30"}`}
+              >
+                {status === "offline" ? "Ficar Online" : "Desconectar"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-[#050505] border border-[#1a1a1a] rounded-xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-200 block uppercase">Realtime Sync</span>
+                  <span className="text-[8px] text-slate-500">Múltiplos dispositivos</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input type="checkbox" checked={cloudSync} onChange={toggleCloudSync} className="sr-only peer" />
+                  <div className="w-8 h-4.5 bg-[#121214] border border-[#222] rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-cyan-400 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-cyan-950/40" />
+                </label>
+              </div>
+
+              <button 
+                onClick={handleBackupForce}
+                disabled={status === "offline" || loading}
+                className="p-3 bg-[#050505] hover:bg-[#121214] border border-[#1a1a1a] rounded-xl flex items-center justify-between transition-colors disabled:opacity-40"
+              >
+                <div className="text-left">
+                  <span className="text-[10px] font-bold text-slate-200 block uppercase">Forçar Backup</span>
+                  <span className="text-[8px] text-slate-500">Sincronizar nuvem</span>
+                </div>
+                <RefreshCw className={`w-4 h-4 text-violet-400 ${loading ? "animate-spin text-cyan-400" : ""}`} />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[9px] font-bold text-slate-550 uppercase tracking-widest font-mono block">Últimos logs de replicação</span>
+              <div className="space-y-1 max-h-[80px] overflow-y-auto">
+                {backupLogs.slice(0, 2).map((log, i) => (
+                  <div key={log.id || i} className="flex justify-between items-center text-[9px] bg-[#050505] p-1.5 rounded border border-[#1a1a1a]">
+                    <span className="text-slate-400 uppercase font-bold font-mono">● {log.provider}</span>
+                    <span className="text-slate-500">{new Date(log.date).toLocaleTimeString("pt-BR")} ({log.sizeStr})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- REPORT EXPORTER AND GENERATOR MODULE ---
+    function ReportExporter({ transactions, boletos, symbol }) {
+      const [month, setMonth] = useState("todos");
+      const [catFilter, setCatFilter] = useState("todas");
+      const [toast, setToast] = useState("");
+
+      const handleCSV = () => {
+        const filtered = transactions.filter(t => {
+          if (month !== "todos" && t.date.split("-")[1] !== month) return false;
+          if (catFilter !== "todas" && t.category.toLowerCase() !== catFilter.toLowerCase()) return false;
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          alert("Nenhum dado encontrado para os filtros!");
+          return;
+        }
+
+        let csv = "\uFEFFID;Tipo;Descricao;Categoria;Valor;Moeda;Data\n";
+        filtered.forEach(t => {
+          csv += `${t.id};${t.type === "income" ? "Receita" : "Despesa"};"${t.description}";${t.category};${t.amount};${t.currency};${t.date}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `easyfinance-relatorio-${month}-${catFilter}.csv`;
+        link.click();
+        
+        triggerSuccess("Relatório CSV baixado com sucesso!");
+      };
+
+      const handlePDF = () => {
+        const win = window.open("", "_blank");
+        if (!win) {
+          alert("Habilite popups para imprimir o demonstrativo financeiro.");
+          return;
+        }
+
+        const filtered = transactions.filter(t => {
+          if (month !== "todos" && t.date.split("-")[1] !== month) return false;
+          if (catFilter !== "todas" && t.category.toLowerCase() !== catFilter.toLowerCase()) return false;
+          return true;
+        });
+
+        const inc = filtered.filter(t => t.type === "income").reduce((s,t) => s + t.amount, 0);
+        const exp = filtered.filter(t => t.type === "expense").reduce((s,t) => s + t.amount, 0);
+
+        const html = `
+          <html>
+            <head>
+              <title>EasyFinance - Demonstrativo Contábil</title>
+              <style>
+                body { font-family: system-ui, sans-serif; color: #1f2937; padding: 40px; }
+                .head { border-bottom: 2px solid #06b6d4; padding-bottom: 12px; margin-bottom: 24px; }
+                .totals { display: flex; gap: 20px; margin-bottom: 30px; }
+                .card { background: #f3f4f6; border-radius: 8px; padding: 16px; flex: 1; }
+                table { width: 100%; border-collapse: collapse; }
+                th { background: #e5e7eb; padding: 10px; text-align: left; font-size: 11px; text-transform: uppercase; }
+                td { padding: 10px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
+              </style>
+            </head>
+            <body>
+              <div class="head">
+                <h2>EASYFINANCE - DEMONSTRATIVO DE FLUXO</h2>
+                <p>Relatório gerado em ambiente seguro standalone</p>
+              </div>
+              <div class="totals">
+                <div class="card"><h4>Receitas</h4><p>R$ ${inc.toFixed(2)}</p></div>
+                <div class="card"><h4>Despesas</h4><p>R$ ${exp.toFixed(2)}</p></div>
+                <div class="card"><h4>Líquido</h4><p>R$ ${(inc - exp).toFixed(2)}</p></div>
+              </div>
+              <table>
+                <thead>
+                  <tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th></tr>
+                </thead>
+                <tbody>
+                  ${filtered.map(t => `
+                    <tr>
+                      <td>${t.date}</td>
+                      <td>${t.description}</td>
+                      <td>${t.category}</td>
+                      <td>${t.type === "income" ? "Ganho" : "Despesa"}</td>
+                      <td>${t.currency} ${t.amount.toFixed(2)}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+              <script>window.onload = () => window.print();<\/script>
+            </body>
+          </html>
+        `;
+
+        win.document.write(html);
+        win.document.close();
+      };
+
+      const triggerSuccess = (msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(""), 3500);
+      };
+
+      return (
+        <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#1a1a1a]">
+            <div>
+              <h2 className="text-xs font-semibold tracking-wider text-white uppercase flex items-center gap-2 font-display">
+                <Download className="w-4 h-4 text-cyan-400" />
+                Exportador de Fluxo
+              </h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">Exporte seus balanços nos formatos locais</p>
+            </div>
+          </div>
+
+          {toast && (
+            <div className="mb-3 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> {toast}
+            </div>
+          )}
+
+          <div className="space-y-4 flex-1">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[9px] text-slate-500 uppercase font-mono block mb-1">Mês de referência</label>
+                <select value={month} onChange={(e) => setMonth(e.target.value)} className="w-full bg-[#050505] border border-[#1a1a1a] p-2 rounded-lg text-xs text-slate-300">
+                  <option value="todos">Todos os meses</option>
+                  <option value="06">Junho</option>
+                  <option value="07">Julho</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[9px] text-slate-500 uppercase font-mono block mb-1">Filtro categoria</label>
+                <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="w-full bg-[#050505] border border-[#1a1a1a] p-2 rounded-lg text-xs text-slate-300">
+                  <option value="todas">Todas as categorias</option>
+                  <option value="Alimentação">Alimentação</option>
+                  <option value="Serviços">Serviços</option>
+                  <option value="Moradia">Moradia</option>
+                  <option value="Transporte">Transporte</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3.5 pt-2">
+              <button onClick={handleCSV} className="p-3.5 rounded-xl bg-[#050505] hover:bg-[#121214] border border-[#1a1a1a] text-left group">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 bg-emerald-500/15 border border-emerald-500/20 rounded flex items-center justify-center text-emerald-400"><FileSpreadsheet className="w-4 h-4" /></div>
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-200 block uppercase">Planilha CSV</span>
+                    <span className="text-[9px] text-slate-550">Excel e Google Sheets</span>
+                  </div>
+                </div>
+              </button>
+
+              <button onClick={handlePDF} className="p-3.5 rounded-xl bg-[#050505] hover:bg-[#121214] border border-[#1a1a1a] text-left group">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 bg-cyan-500/15 border border-cyan-500/20 rounded flex items-center justify-center text-cyan-400"><FileText className="w-4 h-4" /></div>
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-200 block uppercase">Demonstrativo</span>
+                    <span className="text-[9px] text-slate-550">Impressão PDF</span>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- GEMINI AI CHAT & LOCAL INSIGHTS SYSTEM ---
+    function AiGeniusModule({ transactions, boletos, currency, apiKey, setApiKey }) {
+      const [messages, setMessages] = useState([
+        { id: "1", sender: "ai", text: "Olá! Sou o **EasyFinance AI Genius**, seu copiloto financeiro inteligente. Posso analisar suas finanças em tempo real, dar sugestões para cortar despesas e muito mais.\n\n_Para realizar consultas de IA conectadas à internet, você pode configurar sua chave de API do Gemini no campo ao lado! Caso contrário, usarei meu motor de inteligência local offline._", timestamp: new Date() }
+      ]);
+      const [input, setInput] = useState("");
+      const [loading, setLoading] = useState(false);
+      const [showKeyForm, setShowKeyForm] = useState(false);
+      const chatEndRef = useRef(null);
+
+      useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, [messages, loading]);
+
+      const handleSend = async (e) => {
+        e.preventDefault();
+        if (!input.trim() || loading) return;
+
+        const userMsg = {
+          id: Math.random().toString(),
+          sender: "user",
+          text: input,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, userMsg]);
+        const userPrompt = input;
+        setInput("");
+        setLoading(true);
+
+        try {
+          // If API KEY is provided, make a real client-side browser call to Gemini!
+          if (apiKey.trim()) {
+            const resultText = await callGeminiDirect(apiKey, userPrompt, transactions, boletos, currency);
+            setMessages(prev => [...prev, {
+              id: Math.random().toString(),
+              sender: "ai",
+              text: resultText,
+              timestamp: new Date()
+            }]);
+          } else {
+            // Local fallback analyzer with extremely rich insights!
+            setTimeout(() => {
+              const reply = analyzeLocally(userPrompt, transactions, boletos, currency);
+              setMessages(prev => [...prev, {
+                id: Math.random().toString(),
+                sender: "ai",
+                text: reply,
+                timestamp: new Date()
+              }]);
+            }, 1000);
+          }
+        } catch (err) {
+          setMessages(prev => [...prev, {
+            id: Math.random().toString(),
+            sender: "ai",
+            text: `Erro ao conectar com a API do Gemini. Detalhes: ${err.message}. Verifique se sua chave está correta ou limpe-a para rodar no modo offline local.`,
+            timestamp: new Date()
+          }]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // Real Client-Side secure Browser Call to Gemini API
+      const callGeminiDirect = async (key, prompt, txs, bills, curr) => {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+        
+        const txContext = txs.length > 0 
+          ? JSON.stringify(txs.slice(-15).map(t => ({ desc: t.description, cat: t.category, val: t.amount, type: t.type, date: t.date })))
+          : "Nenhuma transação.";
+
+        const billContext = bills.length > 0
+          ? JSON.stringify(bills.map(b => ({ title: b.title, val: b.amount, due: b.dueDate, paid: b.paid })))
+          : "Nenhum boleto.";
+
+        const body = {
+          contents: [{
+            parts: [{
+              text: `Você é o EasyFinance AI Genius. Você está rodando de forma standalone no navegador do usuário.
+DADOS FINANCEIROS ATUAIS DO USUÁRIO:
+Moeda de exibição: ${curr}
+Últimos lançamentos (caixa): ${txContext}
+Contas/Boletos agendados: ${billContext}
+
+Responda em português brasileiro de forma ultra-objetiva, motivadora e prática com dicas financeiras concretas de acordo com a pergunta a seguir. Escreva em formato markdown agradável.
+
+PERGUNTA DO USUÁRIO: ${prompt}`
+            }]
+          }]
+        };
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP status ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || "Não consegui obter insights, verifique a resposta.";
+      };
+
+      // Local offline heuristic analyzer
+      const analyzeLocally = (prompt, txs, bills, curr) => {
+        const query = prompt.toLowerCase();
+        
+        const totalExp = txs.filter(t => t.type === "expense").reduce((s,t) => s + t.amount, 0);
+        const totalInc = txs.filter(t => t.type === "income").reduce((s,t) => s + t.amount, 0);
+        const pendingBills = bills.filter(b => !b.paid).length;
+
+        // Categorize highest expenses
+        const categories = txs.filter(t => t.type === "expense").reduce((acc, t) => {
+          acc[t.category] = (acc[t.category] || 0) + t.amount;
+          return acc;
+        }, {});
+        
+        const sortedCats = Object.entries(categories).sort((a,b) => b[1] - a[1]);
+        const mainCatStr = sortedCats.length > 0 ? `**${sortedCats[0][0]}** (R$ ${sortedCats[0][1].toFixed(2)})` : "nenhuma";
+
+        if (query.includes("dica") || query.includes("sugestão") || query.includes("ajuda") || query.includes("economia")) {
+          return `Aqui estão **3 dicas práticas de economia** baseadas no seu perfil local:
+
+1. ⚠️ **Alerta de Categorias**: Seu maior centro de despesas cadastrado atualmente é em ${mainCatStr}. Tente estabelecer uma meta semanal para reduzir esse custo em 15% neste mês.
+2. 🗓️ **Fique de olho na Agenda**: Você possui atualmente **${pendingBills} boletos pendentes** de pagamento. Pagar antes do vencimento evita multas e juros de mora!
+3. 💼 **Aumente seu aporte**: Atualmente suas receitas somam **R$ ${totalInc.toLocaleString("pt-BR", {maximumFractionDigits: 2})}** contra **R$ ${totalExp.toLocaleString("pt-BR", {maximumFractionDigits: 2})}** em despesas. Tente poupar pelo menos 15% de cada serviço prestado.`;
+        }
+
+        if (query.includes("gasto") || query.includes("despesa") || query.includes("extrato") || query.includes("analis")) {
+          return `**Análise automatizada de lançamentos**:
+          
+- Você registrou um volume de despesas de **R$ ${totalExp.toLocaleString("pt-BR", {maximumFractionDigits: 2})}**.
+- Categoria crítica identificada: ${mainCatStr}.
+- Seu saldo de caixa atual está em **R$ ${(totalInc - totalExp).toLocaleString("pt-BR", {maximumFractionDigits:2})}**.
+
+_Para uma análise profunda e personalizada por modelos de redes neurais generativas, configure uma chave Gemini API no campo de configurações ao lado!_`;
+        }
+
+        return `Entendi a sua dúvida! Para responder de forma 100% personalizada usando modelos avançados de IA Gemini, configure sua chave Gemini API acima. 
+
+Como recomendação geral do **EasyFinance local**:
+Seu fluxo de caixa está com **R$ ${totalInc.toFixed(0)}** de receitas e **R$ ${totalExp.toFixed(0)}** de despesas acumuladas. Mantenha os lançamentos em dia para evitar furos orçamentários!`;
+      };
+
+      return (
+        <div className="bg-[#0d0d0e] border border-[#1a1a1a] rounded-2xl p-6 flex flex-col h-[480px]">
+          <div className="flex items-center justify-between mb-3 pb-3 border-b border-[#1a1a1a]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-400 to-violet-500 flex items-center justify-center shadow">
+                <Sparkles className="w-4.5 h-4.5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1 font-display">EasyFinance AI Genius</h3>
+                <p className="text-[9px] text-slate-500 mt-0.5">Motor de inteligência híbrido (Local / Gemini API)</p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowKeyForm(!showKeyForm)}
+              className="px-2 py-1 bg-[#151515] hover:bg-[#202022] text-[10px] text-slate-300 font-semibold border border-[#222] rounded-lg"
+            >
+              🔑 {apiKey ? "Trocar API Key" : "Configurar Gemini"}
+            </button>
+          </div>
+
+          {showKeyForm && (
+            <div className="bg-[#050505] p-3 rounded-xl border border-[#1a1a1a] mb-3 flex flex-col gap-2">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase">API Key do Gemini (Seguro e Local)</span>
+              <p className="text-[9px] text-slate-550 leading-relaxed">Sua chave é gravada estritamente no seu navegador (localStorage) e as chamadas são feitas diretamente para o endpoint oficial do Google. Nenhum servidor secundário intermedeia.</p>
+              <div className="flex gap-2">
+                <input 
+                  type="password" 
+                  placeholder="AIzaSy..." 
+                  value={apiKey} 
+                  onChange={(e) => setApiKey(e.target.value)} 
+                  className="flex-1 bg-[#0d0d0e] border border-[#1a1a1a] p-1.5 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-cyan-500" 
+                />
+                <button onClick={() => setShowKeyForm(false)} className="px-3 py-1 bg-cyan-500 text-black font-semibold text-xs rounded-lg">Salvar</button>
+              </div>
+            </div>
+          )}
+
+          {/* Chat Bubble Layout */}
+          <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-[#050505]/40 rounded-xl border border-[#1a1a1a] mb-3">
+            {messages.map(m => (
+              <div key={m.id} className={`flex items-start gap-2 max-w-[85%] ${m.sender === 'user' ? 'ml-auto flex-row-reverse' : ''}`}>
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-[10px] font-bold ${m.sender === 'user' ? 'bg-white text-black' : 'bg-cyan-950 text-cyan-400 border border-cyan-500/25'}`}>
+                  {m.sender === 'user' ? 'EU' : <Bot className="w-3.5 h-3.5" />}
+                </div>
+                <div className={`p-2.5 rounded-xl text-[11px] leading-relaxed whitespace-pre-line ${m.sender === 'user' ? 'bg-white text-black font-medium' : 'bg-[#121214] text-slate-200 border border-[#222]'}`}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 rounded-lg bg-cyan-950 text-cyan-400 flex items-center justify-center shrink-0"><Loader2 className="w-3.5 h-3.5 animate-spin" /></div>
+                <div className="p-2.5 rounded-xl text-[11px] bg-[#121214] text-slate-400 animate-pulse">AI Genius está processando insights...</div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          <form onSubmit={handleSend} className="flex gap-2">
+            <input 
+              type="text" 
+              required 
+              placeholder="Digite sua dúvida ou peça: 'Me dê dicas de economia'..." 
+              value={input} 
+              onChange={(e) => setInput(e.target.value)} 
+              className="flex-1 bg-[#050505] border border-[#1a1a1a] p-2 rounded-xl text-xs text-white focus:outline-none" 
+            />
+            <button type="submit" className="w-10 h-10 rounded-xl bg-white text-slate-950 flex items-center justify-center hover:bg-slate-200 shrink-0"><Send className="w-4 h-4" /></button>
+          </form>
+        </div>
+      );
+    }
+
+    // --- RENDER APP TO ROOT ---
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
+  </script>
 </body>
 </html>
