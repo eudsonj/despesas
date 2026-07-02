@@ -27,8 +27,11 @@
   </script>
 
   <!-- React 18 & ReactDOM 18 -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script>
+    window.react = window.React;
+  </script>
   
   <!-- Babel Standalone for on-the-fly TSX compilation -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -72,7 +75,8 @@
       Receipt, Calendar, Copy, Check, DollarSign, AlertTriangle, Trash2, 
       BellRing, Sparkles, Send, Bot, Lightbulb, HelpCircle, ArrowRight, 
       Loader2, Laptop, Sun, Moon, LogOut, PlusCircle, Clock, Unlock, 
-      Building, FileSpreadsheet, FileText, Wifi, WifiOff, HardDrive, Download
+      Building, FileSpreadsheet, FileText, Wifi, WifiOff, HardDrive, Download,
+      Cloud
     } = LucideReact;
 
     // --- INITIAL DATA SEEDING ---
